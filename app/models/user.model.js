@@ -9,10 +9,10 @@ module.exports = (sequelize, Sequelize) => {
     password: {
       type: Sequelize.STRING,
     },
-    createdat: {
+    createdAt: {
       type: Sequelize.DATE,
     },
-    updatedat: {
+    updatedAt: {
       type: Sequelize.DATE,
     },
   });
