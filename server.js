@@ -31,9 +31,11 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome!" });
 });
 
+
 // routes
 require('./app/routes/auth.routers')(app);
 require('./app/routes/user.routers')(app);
+
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
