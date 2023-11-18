@@ -2,3 +2,4 @@
 
 # local env file
 .env*.local
+/config/db.config.js
