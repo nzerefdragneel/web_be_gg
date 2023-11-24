@@ -4,7 +4,7 @@ const cors = require("cors");
 const app = express();
 
 var corsOptions = {
-  origin: "https://web-fe-einu444i9-zerefdragneels-projects.vercel.app/"
+  origin: "https://web-fe-einu444i9-zerefdragneels-projects.vercel.app/",
 };
 
 app.use(cors());
@@ -18,7 +18,6 @@ app.use(express.urlencoded({ extended: true }));
 // database
 const db = require("./app/models");
 
-
 // db.sequelize.sync();
 // force: true will drop the table if it already exists
 // db.sequelize.sync({force: true}).then(() => {
@@ -31,11 +30,9 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome!" });
 });
 
-
 // routes
-require('./app/routes/auth.routers')(app);
-require('./app/routes/user.routers')(app);
-
+require("./app/routes/auth.routers")(app);
+require("./app/routes/user.routers")(app);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
