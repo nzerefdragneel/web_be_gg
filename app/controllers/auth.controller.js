@@ -145,17 +145,10 @@ const forgotPassword = (req, res) => {
 };
 
 const sendResetForm = (req, res) => {
-  if (!req.params.email || !req.query.token) {
-    return res.status(404).send({ message: "Email Not Found." });
-  } else {
-    res.render(`${process.env.APP_URL}/reset-password`, {
-      email: req.params.email,
-      token: req.query.token,
-    });
-  }
+
 };
 
-const resetPassword = (req, res) => {};
+const resetPassword = (req, res) => { };
 
 module.exports = {
   signin,
