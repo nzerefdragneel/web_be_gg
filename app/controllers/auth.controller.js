@@ -51,6 +51,13 @@ const signin = (req, res) => {
         return res.status(404).send({ message: "User Not found." });
       }
 
+      if (!user.verified || user.verified === false) {
+        return res.status(401).send({
+          accessToken: null,
+          message: "Please verify your account first!",
+        });
+      }
+
       const passwordIsValid = bcrypt.compareSync(password, user.password);
 
       if (!passwordIsValid) {
@@ -86,7 +93,7 @@ const verify = (req, res) => {
       email: email,
     },
   })
-    .then(async (user) => {
+    .then((user) => {
       if (!user) {
         return res.status(404).send({ message: "User Not found." });
       }
@@ -99,8 +106,8 @@ const verify = (req, res) => {
         });
       }
 
-      await user
-        .update({ updatedat: Date.now().toString() })
+      user.verified = true;
+      user.save()
         .then(() => {
           res.redirect(`${process.env.APP_URL}/login`);
         })
@@ -113,48 +120,9 @@ const verify = (req, res) => {
     });
 };
 
-const forgotPassword = (req, res) => {
-  const email = req.body.email;
-
-  User.findOne({
-    where: {
-      email: email,
-    },
-  })
-    .then((user) => {
-      if (!user) {
-        return res.status(404).send({ message: "Email Not Found." });
-      }
-
-      let emailToken = bcrypt.hashSync(email, 10);
-      mailer
-        .sendMail(
-          user.email,
-          "Reset your password",
-          `<h1>Hi ${user.username}</h1><p>Click <a href="${process.env.SERVICE_URL}/api/auth/reset-password?token=${emailToken}">here</a> to reset your password.</p>`
-        )
-        .then(() => {
-          res.status(200).send({
-            message: "Email sent successfully!",
-          });
-        });
-    })
-    .catch((err) => {
-      res.status(500).send({ message: err.message });
-    });
-};
-
-const sendResetForm = (req, res) => {
-
-};
-
-const resetPassword = (req, res) => { };
 
 module.exports = {
   signin,
   signup,
   verify,
-  forgotPassword,
-  sendResetForm,
-  resetPassword,
 };

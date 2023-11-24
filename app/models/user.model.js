@@ -15,6 +15,9 @@ module.exports = (sequelize, Sequelize) => {
     updatedAt: {
       type: Sequelize.DATE,
     },
+    verified: {
+      type: Sequelize.BOOLEAN,
+    },
   });
 
   return User;

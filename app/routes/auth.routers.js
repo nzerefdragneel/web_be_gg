@@ -1,14 +1,15 @@
 const { verifySignUp } = require("../middleware");
-const controller = require("../controllers/auth.controller");
+const authController = require("../controllers/auth.controller");
+const passwordController = require("../controllers/forgotPassword.controller");
 module.exports = function (app) {
   app.post(
     "/api/auth/signup",
     [verifySignUp.checkDuplicateUsernameOrEmail],
-    controller.signup
+    authController.signup
   );
-  app.post("/api/auth/signin", controller.signin);
-  app.get("/api/auth/verify", controller.verify);
+  app.post("/api/auth/signin", authController.signin);
+  app.get("/api/auth/verify", authController.verify);
 
-  app.post("/api/auth/forgot-password", controller.forgotPassword);
-  app.get("/api/auth/reset-password/:email", controller.sendResetForm);
+  app.post("/api/auth/forgot-password", passwordController.forgotPassword);
+  app.post("/api/auth/reset-password", passwordController.resetPassword);
 };
