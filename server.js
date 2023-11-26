@@ -1,6 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 
+var passport = require('passport');
+const session = require('express-session');
+require('dotenv').config();
+
 const app = express();
 
 var corsOptions = {
@@ -15,9 +19,22 @@ app.use(express.json());
 // parse requests of content-type - application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
 
+//config passport
+app.use(
+  session({
+      secret: process.env.SECRET,
+      resave: false,
+      saveUninitialized: true,
+      cookie: { maxAge: 60 * 60 * 1000 },
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+
 // database
 const db = require("./app/models");
-
 
 // db.sequelize.sync();
 // force: true will drop the table if it already exists
@@ -35,7 +52,6 @@ app.get("/", (req, res) => {
 // routes
 require('./app/routes/auth.routers')(app);
 require('./app/routes/user.routers')(app);
-
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
