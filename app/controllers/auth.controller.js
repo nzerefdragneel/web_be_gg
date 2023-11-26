@@ -102,9 +102,6 @@ const signin = (req, res, next) => {
 }
 
 passport.use('signin', new localStrategy({
-    // usernameField: 'user.username',
-    // passwordField: 'user.password',
-    // passwordField: 'user.rememberMe',
     passReqToCallback: true
 }, (req, username, password, done) => {
 
@@ -137,6 +134,7 @@ passport.use('signin', new localStrategy({
         .catch(done);
 }
 ))
+
 
 module.exports = {
     signin,
