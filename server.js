@@ -8,10 +8,10 @@ require('dotenv').config();
 const app = express();
 
 var corsOptions = {
-  origin: "https://web-fe-einu444i9-zerefdragneels-projects.vercel.app/"
+  origin: '*'
 };
 
-app.use(cors());
+app.use(cors(corsOptions));
 
 // parse requests of content-type - application/json
 app.use(express.json());

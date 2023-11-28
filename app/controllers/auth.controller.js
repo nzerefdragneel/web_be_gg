@@ -5,6 +5,8 @@ const jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
 const passport = require("passport");
 var localStrategy = require('passport-local').Strategy;
+const FacebookStrategy = require('passport-facebook');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 const signup = (req, res) => {
     // Save User to Database
@@ -135,8 +137,98 @@ passport.use('signin', new localStrategy({
 }
 ))
 
+passport.use('google', new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL
+  },
+  function(accessToken, refreshToken, profile, done) {
+    process.nextTick(function () {
+        //Check whether the User exists or not using profile.id
+        if (config.use_database) {
+            //Further code of Database.
+        }
+        return done(null, profile);
+    });
+  }
+));
+
+const googleSignin = passport.authenticate('google', { scope : ['profile', 'email'] })
+
+const googleSigninCallback = (req, res, next) => {
+    passport.authenticate('google', { session: false }, (err, profile, info) => {
+        if (err) {
+            return next(err)
+        }
+        console.log(profile)
+        if (profile) {
+            // return res.status(200).send({
+            //     profile: profile
+            // });
+            return  res.status(302).redirect('http://localhost:8081/home');
+        }
+        return res.status(400).info;
+    })(req, res, next);
+}
+
+passport.use('facebook', new FacebookStrategy({
+    clientID: process.env.FACEBOOK_APP_ID,
+    clientSecret: process.env.FACEBOOK_SECRET_KEY,
+    callbackURL: process.env.FACEBOOK_CALLBACK_URL
+},
+    function (accessToken, refreshToken, profile, done) {
+        process.nextTick(function () {
+            //Check whether the User exists or not using profile.id
+            if (config.use_database) {
+                //Further code of Database.
+            }
+            return done(null, profile);
+        });
+    }
+))
+
+const facebookSignin =  passport.authenticate('facebook')
+// const facebookSignin = passport.authenticate('facebook', { session: false }, (err, profile, info) => {
+//     if (err) {
+//         return next(err)
+//     }
+//     if (profile) {
+//         console.log(profile)
+//         res.status(200).send({
+//             profile: profile
+//         });
+//         response.writeHead(302, {
+//             'Location': 'http://localhost:8081/home'
+//             //add other headers here...
+//           });
+//           response.end();
+//         return;
+//     }
+//     return res.status(400).info;
+// })
+
+const facebookSigninCallback = (req, res, next) => {
+    passport.authenticate('facebook', { session: false }, (err, profile, info) => {
+        if (err) {
+            return next(err)
+        }
+        if (profile) {
+            console.log(profile)
+            // res.status(200).send({
+            //     profile: profile
+            // });
+            // // return res.redirect(302, "http://localhost:8081/home");            
+            return  res.status(302).redirect('http://localhost:8081/home');
+        }
+        return res.status(400).info;
+    })(req, res, next);
+}
 
 module.exports = {
     signin,
     signup,
+    googleSignin,
+    googleSigninCallback,
+    facebookSignin,
+    facebookSigninCallback
 };
