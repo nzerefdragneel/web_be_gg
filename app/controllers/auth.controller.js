@@ -45,7 +45,7 @@ const signin = (req, res) => {
       }
 
       const accessToken = jwt.sign({ password }, config.secret, {
-        expiresIn: 30, // 1 hour
+        expiresIn: 360000, // 1 hour
       });
 
       res.status(200).send({
