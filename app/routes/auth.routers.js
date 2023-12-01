@@ -1,6 +1,7 @@
 const { verifySignUp } = require("../middleware");
 const authController = require("../controllers/auth.controller");
 const passwordController = require("../controllers/forgotPassword.controller");
+
 module.exports = function (app) {
   app.post(
     "/api/auth/signup",
@@ -12,9 +13,9 @@ module.exports = function (app) {
 
   app.post("/api/auth/forgot-password", passwordController.forgotPassword);
   app.post("/api/auth/reset-password", passwordController.resetPassword);
-  app.get("/api/auth/google", controller.googleSignin)
-  app.get("/api/auth/google/callback", controller.googleSigninCallback)
-  app.get("/api/auth/facebook", controller.facebookSignin)
-  app.get("/api/auth/facebook/callback", controller.facebookSigninCallback)
+  app.get("/api/auth/google", authController.googleSignin)
+  app.get("/api/auth/google/callback", authController.googleSigninCallback)
+  app.get("/api/auth/facebook", authController.facebookSignin)
+  app.get("/api/auth/facebook/callback", authController.facebookSigninCallback)
   // app.get("/api/auth/facebook", controller.facebookSigninCallback)
 };
