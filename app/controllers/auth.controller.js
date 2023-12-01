@@ -7,6 +7,7 @@ const passport = require("passport");
 var localStrategy = require('passport-local').Strategy;
 const FacebookStrategy = require('passport-facebook');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
 require("dotenv").config();
 const mailer = require("../utils/mailer");
 const signup = (req, res) => {
@@ -38,7 +39,7 @@ const signup = (req, res) => {
         });
       });
   };
-
+/*
 const signin = (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
@@ -82,7 +83,7 @@ const signin = (req, res) => {
     .catch((err) => {
       res.status(500).send({ message: err.message });
     });
-};
+};*/
 const verify = (req, res) => {
     const email = req.query.email;
     const token = req.query.token;
@@ -241,7 +242,7 @@ passport.use('facebook', new FacebookStrategy({
     }
 ))
 
-const facebookSignin =  passport.authenticate('facebook')
+const facebookSignin =  passport.authenticate('facebook');
 // const facebookSignin = passport.authenticate('facebook', { session: false }, (err, profile, info) => {
 //     if (err) {
 //         return next(err)
