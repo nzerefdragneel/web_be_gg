@@ -12,4 +12,9 @@ module.exports = function (app) {
 
   app.post("/api/auth/forgot-password", passwordController.forgotPassword);
   app.post("/api/auth/reset-password", passwordController.resetPassword);
+  app.get("/api/auth/google", controller.googleSignin)
+  app.get("/api/auth/google/callback", controller.googleSigninCallback)
+  app.get("/api/auth/facebook", controller.facebookSignin)
+  app.get("/api/auth/facebook/callback", controller.facebookSigninCallback)
+  // app.get("/api/auth/facebook", controller.facebookSigninCallback)
 };
