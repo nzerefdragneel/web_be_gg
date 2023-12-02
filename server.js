@@ -1,6 +1,6 @@
+
 const express = require("express");
 const cors = require("cors");
-
 var passport = require('passport');
 const session = require('express-session');
 require('dotenv').config();
@@ -9,9 +9,6 @@ const app = express();
 
 var corsOptions = {
   origin: "https://web-fe-gg.vercel.app/",
-
-  
-
 };
 
 app.use(cors());
@@ -50,7 +47,11 @@ const db = require("./app/models");
 app.get("/", (req, res) => {
   res.json({ message: "Welcome!" });
 });
-
+app.all('/', function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "X-Requested-With");
+  next()
+});
 // routes
 require("./app/routes/auth.routers")(app);
 require("./app/routes/user.routers")(app);

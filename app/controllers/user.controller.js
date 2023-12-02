@@ -59,3 +59,26 @@ exports.edituser = (req, res) => {
       });
   }
 };
+exports.getuser = (req, res) => {
+
+  if (!req.body.id) {
+    res.status(500).send({ message: "Can't find!" });
+  } else {
+    User.findByPk(req.body.userId)
+      .then((user) => {
+        if (!user) {
+          res.status(500).send({ message: "User not found!" });
+        }
+        res.status(200).send({
+          message: "Success!",
+          id: user.id,
+          username: user.username,
+          email:user.email,
+          verify:user.verify
+        });
+      })
+      .catch((err) => {
+        res.status(500).send({ message: err.message });
+      });
+  }
+};
