@@ -142,9 +142,6 @@ const signin = (req, res, next) => {
             message: "Invalid Password!",
         });
     }
-  
-
-    
     return passport.authenticate('signin', { session: false }, (err, passportUser, info) => {
         if (err) {
             // return res.status(500).send({ message: err.message });
@@ -233,10 +230,11 @@ const googleSigninCallback = (req, res, next) => {
         }
         console.log(profile)
         if (profile) {
-            // return res.status(200).send({
-            //     profile: profile
-            // });
-            return  res.status(302).redirect(`${process.env.APP_URL}/home`);
+            return res.status(200).send({
+                profile: profile
+            });
+
+            //return  res.status(302).redirect(`${process.env.APP_URL}/home`);
         }
         return res.status(400).info;
     })(req, res, next);
@@ -285,11 +283,11 @@ const facebookSigninCallback = (req, res, next) => {
         }
         if (profile) {
             console.log(profile)
-            // res.status(200).send({
-            //     profile: profile
-            // });
+            res.status(200).send({
+                profile: profile
+            });
             // // return res.redirect(302, "http://localhost:8081/home");            
-            return  res.status(302).redirect(`${process.env.APP_URL}/home`);
+            //return  res.status(302).redirect(`${process.env.APP_URL}/home`);
         }
         return res.status(400).info;
     })(req, res, next);

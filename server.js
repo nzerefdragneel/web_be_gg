@@ -11,7 +11,6 @@ var corsOptions = {
   origin: "https://web-fe-gg.vercel.app/",
 };
 
-require ('./app/controllers/passport.controller');
 app.use(cors());
 
 // parse requests of content-type - application/json
