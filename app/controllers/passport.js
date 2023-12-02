@@ -1,4 +1,4 @@
- const fbpassport= require('passport')
+const fbpassport= require('passport')
 const FacebookStrategy = require('passport-facebook').Strategy;
 fbpassport.use('facebook', new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
@@ -16,4 +16,4 @@ fbpassport.use('facebook', new FacebookStrategy({
         });
     }
 ))
-export default fbpassport
+module.exports=fbpassport

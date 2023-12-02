@@ -28,6 +28,11 @@ module.exports = function(app) {
     // [authJwt.verifyToken, authJwt.isAdmin],
     controller.adminBoard
   );
+  app.get(
+    "/api/test/getuser",
+    // [authJwt.verifyToken, authJwt.isAdmin],
+    controller.getuser
+  );
   app.put(
     "/api/test/edituser",
     // [authJwt.verifyToken, authJwt.isAdmin],

@@ -1,7 +1,7 @@
 const { verifySignUp } = require("../middleware");
 const authController = require("../controllers/auth.controller");
 const passwordController = require("../controllers/forgotPassword.controller");
-
+const passport = require("passport");
 module.exports = function (app) {
   app.post(
     "/api/auth/signup",
@@ -17,5 +17,8 @@ module.exports = function (app) {
   app.get("/api/auth/google/callback", authController.googleSigninCallback)
   app.get("/api/auth/facebook", authController.facebookSignin)
   app.get("/api/auth/facebook/callback", authController.facebookSigninCallback)
-  // app.get("/api/auth/facebook", controller.facebookSigninCallback)
+
+
+  
+
 };
