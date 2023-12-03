@@ -272,7 +272,6 @@ const facebookSigninCallback = (req, res, next) => {
             // res.status(200).send({
             //     profile: profile
             // });
-            // // return res.redirect(302, "http://localhost:8081/home");            
             return  res.status(302).redirect(`${process.env.APP_URL}/home`);
         }
         return res.status(400).info;
