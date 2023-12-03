@@ -18,6 +18,15 @@ module.exports = (sequelize, Sequelize) => {
     verified: {
       type: Sequelize.BOOLEAN,
     },
+    roles:{
+      type: Sequelize.STRING,
+    },
+    type:{
+      type: Sequelize.STRING,
+    },
+    fbID:{
+      type: Sequelize.STRING,
+    },
   });
 
   return User;
