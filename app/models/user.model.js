@@ -20,7 +20,13 @@ module.exports = (sequelize, Sequelize) => {
     },
     roles:{
       type: Sequelize.STRING,
-    }
+    },
+    type:{
+      type: Sequelize.STRING,
+    },
+    fbID:{
+      type: Sequelize.STRING,
+    },
   });
 
   return User;
