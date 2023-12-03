@@ -60,11 +60,11 @@ exports.edituser = (req, res) => {
   }
 };
 exports.getuserroles = (req, res) => {
-
-  if (!req.body.id) {
+  console.log(req.query)
+  if (!req.query.id) {
     res.status(500).send({ message: "Can't find!" });
   } else {
-    User.findByPk(req.body.id)
+    User.findByPk(req.query.id)
       .then((user) => {
         if (!user) {
           res.status(500).send({ message: "User not found!" });

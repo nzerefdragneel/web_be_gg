@@ -178,16 +178,16 @@ passport.use('signin', new localStrategy({
         },
     })
         .then((user) => {
+            console.log(user);
             if (!user) {
                 return done(null, false, { errors: { 'Username or password': 'is invalid' } });
             }
-
+            console.log( bcrypt.hashSync(req.body.password, 8));
             const passwordIsValid = bcrypt.compareSync(req.body.password, user.password);
 
             if (!passwordIsValid) {
                 return done(null, false, { errors: { 'Username or password': 'is invalid' } });
             }
-            
             console.log(user);
             if (!user.verified || user.verified === false||user.verified===null) {
 
