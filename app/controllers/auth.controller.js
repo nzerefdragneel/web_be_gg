@@ -164,7 +164,6 @@ const signin = (req, res, next) => {
         rememberMe: true,
     }
 
-
     if (!user.username) {
         return res.status(404).send({ message: "User Not found." });
     }
@@ -190,6 +189,7 @@ const signin = (req, res, next) => {
                 username: passportUser.username,
                 email: passportUser.email,
                 accessToken: accessToken,
+                exp: 360000
             });
         }
         return res.status(400).info;
@@ -216,18 +216,9 @@ passport.use('signin', new localStrategy({
                 return done(null, false, { errors: { 'Username or password': 'is invalid' } });
             }
 
-            console.log(user);
-            if (!user.verified || user.verified === false) {
-                return res.status(401).send({
-                    accessToken: null,
-                    message: "Please verify your account first!",
-                });
-            }
             if (true) {
-                console.log('remember')
                 req.session.cookie.maxAge = 60 * 60 * 1000; // Cookie expires after 1 hour
             } else {
-                console.log('no remember')
                 req.session.cookie.expires = false; // Cookie expires at end of session
             }
 
