@@ -12,6 +12,34 @@ require("dotenv").config();
 const mailer = require("../utils/mailer");
 const signup = (req, res) => {
     // Save User to Database
+  if(!req.body.isVerified){
+    User.create({
+      username: req.body.username,
+      email: req.body.email,
+      password: bcrypt.hashSync(req.body.password, 8),
+      verify:true,
+      createdat: Date.now().toString(),
+    })
+      .then((user) => {
+        const password=req.body.password;
+        const accessToken = jwt.sign({ password }, config.secret, {
+          expiresIn: 360000, // 1 hour
+        });
+        res.status(200).send({
+          message:
+            "Success",
+            id: user.id,
+            username: user.username,
+            accessToken: accessToken,
+            email:user.email,
+        });
+      }).catch((err) => {
+        res.status(400).send({
+          message: err.message,
+          
+        });
+      });
+  }
     User.create({
       username: req.body.username,
       email: req.body.email,
@@ -19,6 +47,7 @@ const signup = (req, res) => {
       createdat: Date.now().toString(),
     })
       .then((user) => {
+       
         let emailToken = bcrypt.hashSync(req.body.email, 10);
         mailer
           .sendMail(
@@ -32,6 +61,7 @@ const signup = (req, res) => {
                 "User registered successfully! Please check your email to verify your account.",
             });
           });
+        
       })
       .catch((err) => {
         res.status(400).send({
@@ -129,8 +159,9 @@ const signin = (req, res, next) => {
     const user = {
         username: req.body.username,
         password: req.body.password,
-        rememberMe: req.body.rememberMe,
+        rememberMe: true,
     }
+   
 
     if (!user.username) {
         return res.status(404).send({ message: "User Not found." });
@@ -141,17 +172,22 @@ const signin = (req, res, next) => {
             message: "Invalid Password!",
         });
     }
-
     return passport.authenticate('signin', { session: false }, (err, passportUser, info) => {
         if (err) {
             // return res.status(500).send({ message: err.message });
             return next(err)
         }
+        const password=req.body.password;
+        const accessToken = jwt.sign({ password }, config.secret, {
+          expiresIn: 360000, // 1 hour
+        });
+  
         if (passportUser) {
             return res.status(200).send({
                 id: passportUser.id,
                 username: passportUser.username,
-                maxAge: req.session.cookie.maxAge,
+                email:passportUser.email,
+                accessToken:accessToken,
             });
         }
         return res.status(400).info;
@@ -177,8 +213,15 @@ passport.use('signin', new localStrategy({
             if (!passwordIsValid) {
                 return done(null, false, { errors: { 'Username or password': 'is invalid' } });
             }
-
-            if (req.body.rememberMe) {
+            
+            console.log(user);
+            if (!user.verified || user.verified === false) {
+              return res.status(401).send({
+                accessToken: null,
+                message: "Please verify your account first!",
+              });
+            }
+            if (true) {
                 console.log('remember')
                 req.session.cookie.maxAge = 60 * 60 * 1000; // Cookie expires after 1 hour
             } else {
@@ -220,7 +263,10 @@ const googleSigninCallback = (req, res, next) => {
             // return res.status(200).send({
             //     profile: profile
             // });
-            return  res.status(302).redirect(`${process.env.APP_URL}/home`);
+            const accessToken = jwt.sign({ profile }, config.secret, {
+              expiresIn: 3600, // 1 hour
+            });
+            return  res.status(302).redirect(`${process.env.APP_URL}/home?accessToken=${accessToken}`);
         }
         return res.status(400).info;
     })(req, res, next);
@@ -272,8 +318,27 @@ const facebookSigninCallback = (req, res, next) => {
             // res.status(200).send({
             //     profile: profile
             // });
-            // // return res.redirect(302, "http://localhost:8081/home");            
-            return  res.status(302).redirect(`${process.env.APP_URL}/home`);
+            // // return res.redirect(302, "http://localhost:8081/home");   
+              
+            User.findOne({
+              where: {
+                  email: req.body.email
+              }
+            }).then((user) => {
+                if (user) {
+                  const accessToken = jwt.sign({ user }, config.secret, {
+                    expiresIn: 3600, // 1 hour
+                  });     
+                  return  res.status(302).redirect(`${process.env.APP_URL}/home?accessToken=${accessToken}&haveAccount=true`);
+                }    
+                const accessToken = jwt.sign({ profile }, config.secret, {
+                  expiresIn: 3600, // 1 hour
+                }); 
+                return  res.status(302).redirect(`${process.env.APP_URL}/home?accessToken=${accessToken}&haveAccount=false`);
+                    
+            })
+              
+            
         }
         return res.status(400).info;
     })(req, res, next);
