@@ -12,35 +12,7 @@ require("dotenv").config();
 const mailer = require("../utils/mailer");
 const signup = (req, res) => {
     // Save User to Database
-  if(!req.body.isVerified){
-    User.create({
-      username: req.body.username,
-      email: req.body.email,
-      password: bcrypt.hashSync(req.body.password, 8),
-      verify:true,
-      type:req.body.type,
-      createdat: Date.now().toString(),
-    })
-      .then((user) => {
-        const password=req.body.password;
-        const accessToken = jwt.sign({ password }, config.secret, {
-          expiresIn: 360000, // 1 hour
-        });
-        res.status(200).send({
-          message:
-            "Success",
-            id: user.id,
-            username: user.username,
-            accessToken: accessToken,
-            email:user.email,
-        });
-      }).catch((err) => {
-        res.status(400).send({
-          message: err.message,
-          
-        });
-      });
-  }
+  
     User.create({
       username: req.body.username,
       email: req.body.email,
@@ -216,11 +188,9 @@ passport.use('signin', new localStrategy({
             }
             
             console.log(user);
-            if (!user.verified || user.verified === false) {
-              return res.status(401).send({
-                accessToken: null,
-                message: "Please verify your account first!",
-              });
+            if (!user.verified || user.verified === false||user.verified===null) {
+
+              return  done(null, false, { errors: { 'Please verify your email first!': 'is invalid' } });
             }
             if (true) {
                 console.log('remember')
