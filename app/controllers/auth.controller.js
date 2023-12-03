@@ -18,6 +18,7 @@ const signup = (req, res) => {
       email: req.body.email,
       password: bcrypt.hashSync(req.body.password, 8),
       verify:true,
+      type:req.body.type,
       createdat: Date.now().toString(),
     })
       .then((user) => {
@@ -263,7 +264,8 @@ const googleSigninCallback = (req, res, next) => {
             // return res.status(200).send({
             //     profile: profile
             // });
-            const accessToken = jwt.sign({ profile }, config.secret, {
+            const json=profile._json ;
+            const accessToken = jwt.sign({ json }, config.secret, {
               expiresIn: 3600, // 1 hour
             });
             return  res.status(302).redirect(`${process.env.APP_URL}/home?accessToken=${accessToken}`);
