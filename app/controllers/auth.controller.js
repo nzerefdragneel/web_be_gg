@@ -175,8 +175,8 @@ const signin = (req, res, next) => {
     }
     return passport.authenticate('signin', { session: false }, (err, passportUser, info) => {
         if (err) {
-            // return res.status(500).send({ message: err.message });
-            return next(err)
+            return res.status(500).send({ message: err.message });
+            // return next(err)
         }
         const password = req.body.password;
         const accessToken = jwt.sign({ password }, config.secret, {
@@ -224,8 +224,10 @@ passport.use('signin', new localStrategy({
 
             return done(null, user);
         })
-        .catch(done);
-}
+        .catch((err) => {
+            done(err, false, { errors: { 'Username or password': 'is invalid' } })
+        });
+        }
 ))
 
 passport.use('google', new GoogleStrategy({
@@ -303,6 +305,7 @@ passport.use('facebook', new FacebookStrategy({
             if (config.use_database) {
                 //Further code of Database.
             }
+            console.log(profile)
             return done(null, profile);
         });
     }
@@ -317,6 +320,8 @@ const facebookSigninCallback = (req, res, next) => {
         }
         if (profile) {
             const json = profile._json;
+
+            console.log(profile)
 
             User.findOne({
                 where: {
