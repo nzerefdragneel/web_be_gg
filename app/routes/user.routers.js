@@ -37,6 +37,6 @@ module.exports = function(app) {
     "/api/test/edituser",
     // [authJwt.verifyToken, authJwt.isAdmin],
     controller.edituser
-  )
-  app.post('api/test/getroles',controller.getuserroles)
+  );
+  app.get("/api/test/getroles",controller.getuserroles);
 };
