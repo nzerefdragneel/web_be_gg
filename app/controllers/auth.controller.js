@@ -202,9 +202,7 @@ passport.use('signin', new localStrategy({
 
             return done(null, user);
         })
-        .catch((err) => {
-            done(err, false, { errors: { 'Username or password': 'is invalid' } })
-        });
+        .catch(done);
         }
 ))
 
