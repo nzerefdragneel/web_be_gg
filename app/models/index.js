@@ -24,5 +24,8 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 db.user = require("./user.model.js")(sequelize, Sequelize);
-
+db.classes=require("./classes.model.js")(sequelize,Sequelize);
+db.enrollment=require("./errollment.model.js")(sequelize,Sequelize);
+db.teachers=require("./teachers.model.js")(sequelize,Sequelize);
+db.assignment=require("./assignment.model.js")(sequelize,Sequelize);
 module.exports = db;
