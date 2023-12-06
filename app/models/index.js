@@ -28,4 +28,16 @@ db.classes=require("./classes.model.js")(sequelize,Sequelize);
 db.enrollment=require("./errollment.model.js")(sequelize,Sequelize);
 db.teachers=require("./teachers.model.js")(sequelize,Sequelize);
 db.assignment=require("./assignment.model.js")(sequelize,Sequelize);
+//foreign key teacher
+db.teachers.belongsTo(db.user, { foreignKey: 'teacherId', as: 'teacher' });
+db.teachers.belongsTo(db.classes, { foreignKey: 'classId', as: 'class' });
+//foreign key assignment
+db.assignment.belongsTo(db.classes, { foreignKey: 'classId', as: 'classassignment' });
+db.assignment.belongsTo(db.user, { foreignKey: 'teacherId', as: 'teacherassignment' });
+//foreign key enrollment
+db.enrollment.belongsTo(db.user, { foreignKey: 'studentId', as: 'studentenrollment' });
+db.enrollment.belongsTo(db.classes, { foreignKey: 'classId', as: 'classenrollment' });
+
+
+
 module.exports = db;
