@@ -55,7 +55,7 @@ app.all('/', function(req, res, next) {
 // routes
 require("./app/routes/auth.routers")(app);
 require("./app/routes/user.routers")(app);
-
+require("./app/routes/classes.routers")(app);
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {

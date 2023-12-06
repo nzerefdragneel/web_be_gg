@@ -23,7 +23,7 @@ checkDuplicateUsernameOrEmail = (req, res, next) => {
                 email: req.body.email
             }
         }).then((user) => {
-            if (user) {
+            if (user && !user.type) {
                 res.status(400).send({
                     message: 'Falied! Email is already in use!'
                 })
