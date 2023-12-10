@@ -226,6 +226,13 @@ exports.getStudentInClass = (req, res) => {
     enrollments
         .findAll({
             where: { classId: id,accept:true },
+            include: [
+                {
+                  model: users,
+                  attributes: ['fullname','username'], // Specify the attributes you want to retrieve from the User model
+                  as: 'studentenrollment', // Assuming there is a foreign key named userId in the Teacher model
+                },
+              ],
         })
         .then((data) => {
             res.status(200).send({ message: "Success!", data: data });
@@ -277,14 +284,21 @@ exports.acceptTeacherInvitation = (req, res) => {
 exports.getTeacherInClass = (req, res) => {
     const { id } = req.query;
     teachers
-        .findAll({
-            where: { classId: id,accept:true },
-        })
-        .then((data) => {
-            res.status(200).send({ message: "Success!", data: data });
-        })
-        .catch((err) => {
-            res.status(500).send({ message: err.message });
-        });
+  .findAll({
+    where: { classId: id, accept: true },
+    include: [
+      {
+        model: users,
+        attributes: ['fullname','username'], // Specify the attributes you want to retrieve from the User model
+        as: 'teacher', // Assuming there is a foreign key named userId in the Teacher model
+      },
+    ],
+  })
+  .then((data) => {
+    res.status(200).send({ message: 'Success!', data: data });
+  })
+  .catch((err) => {
+    res.status(500).send({ message: err.message });
+  });
 }
 
