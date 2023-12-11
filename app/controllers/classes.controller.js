@@ -52,9 +52,17 @@ exports.createClass = async (req, res) => {
 };
 
 const generateClassroomLink = (classId, isTeacher) => {
+  
   const link = `${process.env.APP_URL}/invitation?id=${classId}&isTeacher=${isTeacher}`;
   return link;
 };
+exports.generateClassroomLink = async (req, res) => {
+  const {  classId, isTeacher } = req.query;
+
+  const link = `${process.env.APP_URL}/invitation?id=${classId}&isTeacher=${isTeacher}`;
+   return  res.status(200).send({ message: "Success!", data: link });
+};
+
 
 exports.acceptInvitation = async (req, res) => {
   try {
@@ -245,7 +253,7 @@ exports.getClassByStudentId = (req, res) => {
 };
 
 exports.inviteStudent = (req, res) => {
-  const { studentEmail, classId } = req.body;
+  const { studentEmail, classId } = req.query;
   mailer
     .sendMail(
       studentEmail,
@@ -282,7 +290,7 @@ exports.getStudentInClass = (req, res) => {
 };
 
 exports.inviteTeacher = (req, res) => {
-  const { teacherEmail, classId } = req.body;
+  const { teacherEmail, classId } = req.query;
   mailer
     .sendMail(
       teacherEmail,
@@ -296,6 +304,18 @@ exports.inviteTeacher = (req, res) => {
       });
     });
 };
+exports.isTeacher=(req,res)=>{
+  const {classId,userId}=req.query;
+  console.log(req.query)
+  teachers.findOne({where:{classId:classId,teacherId:userId}}).then((result)=>{
+    if(result){
+      res.status(200).send({message:"Success!",data:true});
+    }
+    else{
+      res.status(200).send({message:"Success!",data:false});
+    }
+  })
+}
 
 exports.getTeacherInClass = (req, res) => {
   const { id } = req.query;

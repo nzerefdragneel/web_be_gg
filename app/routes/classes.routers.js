@@ -7,9 +7,11 @@ module.exports = function (app) {
   app.get("/api/classes/getbyid", classes.getClassById);
   app.get("/api/classes/getbyteacherid", classes.getClassByTeacherId);
   app.get("/api/classes/getbystudentid", classes.getClassByStudentId);
-  app.post("/api/classes/invitestudent", classes.inviteStudent);
+  app.get("/api/classes/invitestudent", classes.inviteStudent);
   app.post("/api/classes/inviteteacher", classes.inviteTeacher);
   app.post("/api/classes/acceptInvitation", classes.acceptInvitation);
   app.get("/api/classes/getstudentinclass", classes.getStudentInClass);
   app.get("/api/classes/getteacherinclass", classes.getTeacherInClass);
+  app.get("/api/classes/istecher", classes.isTeacher);
+  app.get("/api/classes/getlink", classes.generateClassroomLink);
 };
