@@ -5,6 +5,7 @@ const teachers = db.teachers;
 const users = db.user;
 const enrollments = db.enrollment;
 const assignment = db.assignment;
+const crypto = require("crypto");
 require("dotenv").config();
 
 exports.createClass = async (req, res) => {
@@ -51,18 +52,45 @@ exports.createClass = async (req, res) => {
   }
 };
 
-const generateClassroomLink = (classId, isTeacher) => {
-  
-  const link = `${process.env.APP_URL}/invitation?id=${classId}&isTeacher=${isTeacher}`;
-  return link;
-};
+function encrypt(text, password) {
+  const iv = crypto.randomBytes(16);
+
+  // Hash password
+  const key = crypto.scryptSync(password, "salt", 24);
+
+  const cipher = crypto.createCipheriv("aes192", key, iv);
+
+  let encrypted = cipher.update(text, "utf8", "hex");
+
+  encrypted += cipher.final("hex");
+
+  return iv.toString("hex") + ":" + encrypted;
+}
+
+function decrypt(encrypted, password) {
+  const textParts = encrypted.split(":");
+  const iv = Buffer.from(textParts.shift(), "hex");
+
+  const key = crypto.scryptSync(password, "salt", 24);
+
+  const encryptedText = textParts.join(":");
+
+  const decipher = crypto.createDecipheriv("aes192", key, iv);
+
+  let decrypted = decipher.update(encryptedText, "hex", "utf8");
+
+  decrypted += decipher.final("utf8");
+
+  return decrypted;
+}
+
 exports.generateClassroomLink = async (req, res) => {
-  const {  classId, isTeacher } = req.query;
+  const { classId, isTeacher } = req.query;
+  const hashedClassId = encrypt(classId, process.env.SECRET);
 
-  const link = `${process.env.APP_URL}/invitation?id=${classId}&isTeacher=${isTeacher}`;
-   return  res.status(200).send({ message: "Success!", data: link });
+  const link = `${process.env.APP_URL}/invitation?id=${hashedClassId}&isTeacher=${isTeacher}`;
+  return res.status(200).send({ message: "Success!", data: link });
 };
-
 
 exports.acceptInvitation = async (req, res) => {
   try {
@@ -70,14 +98,17 @@ exports.acceptInvitation = async (req, res) => {
     if (!userId || !classId) {
       return res.status(400).send({ message: "Invalid invitation" });
     }
+
+    const decryptedClassId = decrypt(classId, process.env.SECRET);
+
     if (isTeacher === "true") {
       teachers
-        .findOne({ where: { classId: classId, teacherId: userId } })
+        .findOne({ where: { classId: decryptedClassId, teacherId: userId } })
         .then((result) => {
           if (!result) {
             teachers
               .create({
-                classId: classId,
+                classId: decryptedClassId,
                 teacherId: userId,
                 accept: true,
               })
@@ -86,16 +117,16 @@ exports.acceptInvitation = async (req, res) => {
                 res.status(500).send({ message: err.message });
               });
           }
-          return res.redirect(`${process.env.APP_URL}`); // redirect to class page
+          return res.status(200).send({ message: "Success!" });
         });
     } else {
       enrollments
-        .findOne({ where: { classId: classId, studentId: userId } })
+        .findOne({ where: { classId: decryptedClassId, studentId: userId } })
         .then((result) => {
           if (!result) {
             enrollments
               .create({
-                classId: classId,
+                classId: decryptedClassId,
                 studentId: userId,
                 enrollmentDate: new Date(Date.now()),
                 accept: true,
@@ -105,7 +136,7 @@ exports.acceptInvitation = async (req, res) => {
                 res.status(500).send({ message: err.message });
               });
           }
-          return res.redirect(`${process.env.APP_URL}`); // redirect to class page
+          return res.status(200).send({ message: "Success!" });
         });
     }
   } catch (err) {
@@ -254,11 +285,14 @@ exports.getClassByStudentId = (req, res) => {
 
 exports.inviteStudent = (req, res) => {
   const { studentEmail, classId } = req.query;
+
+  const hashedClassId = encrypt(classId, process.env.SECRET);
+
   mailer
     .sendMail(
       studentEmail,
       "Invitation to join class",
-      `<p>Click <a href="${process.env.APP_URL}/invitation?id=${classId}&isTeacher=false">here</a> to join your classroom.</p>`
+      `<p>Click <a href="${process.env.APP_URL}/invitation?id=${hashedClassId}&isTeacher=false">here</a> to join your classroom.</p>`
     )
     .then(() => {
       res.status(201).send({
@@ -291,11 +325,14 @@ exports.getStudentInClass = (req, res) => {
 
 exports.inviteTeacher = (req, res) => {
   const { teacherEmail, classId } = req.query;
+
+  const hashedClassId = encrypt(classId, process.env.SECRET);
+
   mailer
     .sendMail(
       teacherEmail,
       "Invitation to join class",
-      `<p>Click <a href="${process.env.APP_URL}/invitation?id=${classId}&isTeacher=true">here</a> to join your classroom.</p>`
+      `<p>Click <a href="${process.env.APP_URL}/invitation?id=${hashedClassId}&isTeacher=true">here</a> to join your classroom.</p>`
     )
     .then(() => {
       res.status(201).send({
@@ -304,18 +341,19 @@ exports.inviteTeacher = (req, res) => {
       });
     });
 };
-exports.isTeacher=(req,res)=>{
-  const {classId,userId}=req.query;
-  console.log(req.query)
-  teachers.findOne({where:{classId:classId,teacherId:userId}}).then((result)=>{
-    if(result){
-      res.status(200).send({message:"Success!",data:true});
-    }
-    else{
-      res.status(200).send({message:"Success!",data:false});
-    }
-  })
-}
+exports.isTeacher = (req, res) => {
+  const { classId, userId } = req.query;
+  console.log(req.query);
+  teachers
+    .findOne({ where: { classId: classId, teacherId: userId } })
+    .then((result) => {
+      if (result) {
+        res.status(200).send({ message: "Success!", data: true });
+      } else {
+        res.status(200).send({ message: "Success!", data: false });
+      }
+    });
+};
 
 exports.getTeacherInClass = (req, res) => {
   const { id } = req.query;
