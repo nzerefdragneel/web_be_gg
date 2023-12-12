@@ -93,8 +93,9 @@ exports.generateClassroomLink = async (req, res) => {
   }
 
   const hashedClassId = encrypt(classId, process.env.SECRET);
+  const hashedtecher = encrypt(isTeacher, process.env.SECRET);
 
-  const link = `${process.env.APP_URL}/invitation?id=${hashedClassId}&isTeacher=${isTeacher}`;
+  const link = `${process.env.APP_URL}/invitation?id=${hashedClassId}&isTeacher=${hashedClassId}`;
   return res.status(200).send({ message: "Success!", data: link });
 };
 
@@ -107,8 +108,9 @@ exports.acceptInvitation = async (req, res) => {
     }
 
     const decryptedClassId = decrypt(classId, process.env.SECRET);
+    const decryptedIsTeacher = decrypt(isTeacher, process.env.SECRET);
 
-    if (isTeacher === "true") {
+    if (decryptedIsTeacher === "true") {
       teachers
         .findOne({ where: { classId: decryptedClassId, teacherId: userId } })
         .then((result) => {
@@ -311,12 +313,13 @@ if (!studentEmail || !classId) {
   res.status(400).send({ message: "Please provide student email and class id!" });
 };
   const hashedClassId = encrypt(classId, process.env.SECRET);
+  const hashedtecher = encrypt("false", process.env.SECRET);
 
   mailer
     .sendMail(
       studentEmail,
       "Invitation to join class",
-      `<p>Click <a href="${process.env.APP_URL}/invitation?id=${hashedClassId}&isTeacher=false">here</a> to join your classroom.</p>`
+      `<p>Click <a href="${process.env.APP_URL}/invitation?id=${hashedClassId}&isTeacher=${hashedtecher}">here</a> to join your classroom.</p>`
     )
     .then(() => {
       res.status(201).send({
@@ -351,18 +354,19 @@ exports.getStudentInClass = (req, res) => {
 };
 
 exports.inviteTeacher = (req, res) => {
-  const { teacherEmail, classId } = req.query;
+  const {  classId,teacherEmail } = req.query;
   if (!teacherEmail || !classId) {  
     res.status(400).send({ message: "Please provide teacher email and class id!" });
   }
 
   const hashedClassId = encrypt(classId, process.env.SECRET);
+  const hashedtecher = encrypt("true", process.env.SECRET);
 
   mailer
     .sendMail(
       teacherEmail,
       "Invitation to join class",
-      `<p>Click <a href="${process.env.APP_URL}/invitation?id=${hashedClassId}&isTeacher=true">here</a> to join your classroom.</p>`
+      `<p>Click <a href="${process.env.APP_URL}/invitation?id=${hashedClassId}&isTeacher=${hashedtecher}">here</a> to join your classroom.</p>`
     )
     .then(() => {
       res.status(201).send({

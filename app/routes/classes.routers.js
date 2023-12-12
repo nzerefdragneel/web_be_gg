@@ -8,7 +8,7 @@ module.exports = function (app) {
   app.get("/api/classes/getbyteacherid", classes.getClassByTeacherId);
   app.get("/api/classes/getbystudentid", classes.getClassByStudentId);
   app.get("/api/classes/invitestudent", classes.inviteStudent);
-  app.post("/api/classes/inviteteacher", classes.inviteTeacher);
+  app.get("/api/classes/inviteemailteacher", classes.inviteTeacher);
   app.post("/api/classes/acceptInvitation", classes.acceptInvitation);
   app.get("/api/classes/getstudentinclass", classes.getStudentInClass);
   app.get("/api/classes/getteacherinclass", classes.getTeacherInClass);
