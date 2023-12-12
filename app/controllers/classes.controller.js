@@ -95,7 +95,7 @@ exports.generateClassroomLink = async (req, res) => {
   const hashedClassId = encrypt(classId, process.env.SECRET);
   const hashedtecher = encrypt(isTeacher, process.env.SECRET);
 
-  const link = `${process.env.APP_URL}/invitation?id=${hashedClassId}&isTeacher=${hashedClassId}`;
+  const link = `${process.env.APP_URL}/invitation?id=${hashedClassId}&isTeacher=${hashedtecher}`;
   return res.status(200).send({ message: "Success!", data: link });
 };
 
