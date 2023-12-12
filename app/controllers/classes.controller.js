@@ -86,6 +86,12 @@ function decrypt(encrypted, password) {
 
 exports.generateClassroomLink = async (req, res) => {
   const { classId, isTeacher } = req.query;
+  if (!classId ) {
+    return res
+      .status(400)
+      .send({ message: "Please fill all required fields!" });
+  }
+
   const hashedClassId = encrypt(classId, process.env.SECRET);
 
   const link = `${process.env.APP_URL}/invitation?id=${hashedClassId}&isTeacher=${isTeacher}`;
@@ -95,6 +101,7 @@ exports.generateClassroomLink = async (req, res) => {
 exports.acceptInvitation = async (req, res) => {
   try {
     const { userId, classId, isTeacher } = req.body;
+
     if (!userId || !classId) {
       return res.status(400).send({ message: "Invalid invitation" });
     }
@@ -186,6 +193,12 @@ exports.getAllClass = async (req, res) => {
 exports.deleteClass = async (req, res) => {
   try {
     const { id } = req.body;
+    if (!id) {
+      return res
+        .status(400)
+        .send({ message: "Please fill all required fields!" });
+    }
+
     console.log(req.body);
     await assignment.destroy({
       where: { classId: id },
@@ -245,6 +258,9 @@ exports.updateClass = (req, res) => {
 
 exports.getClassById = (req, res) => {
   const { id } = req.query;
+  if (!id) {
+    res.status(400).send({ message: "Please provide class id!" });
+  };
   classes
     .findOne({
       where: { id: id },
@@ -258,6 +274,9 @@ exports.getClassById = (req, res) => {
 };
 exports.getClassByTeacherId = (req, res) => {
   const { id } = req.query;
+  if (!id) { 
+    res.status(400).send({ message: "Please provide teacher id!" });
+  };
   teachers
     .findAll({
       where: { teacherId: id },
@@ -271,6 +290,9 @@ exports.getClassByTeacherId = (req, res) => {
 };
 exports.getClassByStudentId = (req, res) => {
   const { id } = req.query;
+  if (!id) {  
+    res.status(400).send({ message: "Please provide student id!" });
+  };
   enrollments
     .findAll({
       where: { studentId: id },
@@ -285,7 +307,9 @@ exports.getClassByStudentId = (req, res) => {
 
 exports.inviteStudent = (req, res) => {
   const { studentEmail, classId } = req.query;
-
+if (!studentEmail || !classId) {  
+  res.status(400).send({ message: "Please provide student email and class id!" });
+};
   const hashedClassId = encrypt(classId, process.env.SECRET);
 
   mailer
@@ -304,6 +328,9 @@ exports.inviteStudent = (req, res) => {
 
 exports.getStudentInClass = (req, res) => {
   const { id } = req.query;
+  if (!id) {  
+    res.status(400).send({ message: "Please provide class id!" });
+  }
   enrollments
     .findAll({
       where: { classId: id, accept: true },
@@ -325,6 +352,9 @@ exports.getStudentInClass = (req, res) => {
 
 exports.inviteTeacher = (req, res) => {
   const { teacherEmail, classId } = req.query;
+  if (!teacherEmail || !classId) {  
+    res.status(400).send({ message: "Please provide teacher email and class id!" });
+  }
 
   const hashedClassId = encrypt(classId, process.env.SECRET);
 
@@ -344,6 +374,9 @@ exports.inviteTeacher = (req, res) => {
 exports.isTeacher = (req, res) => {
   const { classId, userId } = req.query;
   console.log(req.query);
+  if  (!classId || !userId) { 
+    res.status(400).send({ message: "Please provide class id and user id!" });
+  }
   teachers
     .findOne({ where: { classId: classId, teacherId: userId } })
     .then((result) => {
@@ -357,6 +390,9 @@ exports.isTeacher = (req, res) => {
 
 exports.getTeacherInClass = (req, res) => {
   const { id } = req.query;
+  if (!id) {  
+    res.status(400).send({ message: "Please provide class id!" });
+  }
   teachers
     .findAll({
       where: { classId: id, accept: true },
