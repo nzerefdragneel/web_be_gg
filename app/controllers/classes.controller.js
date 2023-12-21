@@ -1,3 +1,4 @@
+const { now } = require("sequelize/types/utils");
 const db = require("../models");
 const mailer = require("../utils/mailer");
 const classes = db.classes;
@@ -417,3 +418,76 @@ exports.getTeacherInClass = (req, res) => {
       res.status(500).send({ message: err.message });
     });
 };
+exports.updatemssv=(req,res)=>{
+  const { classId,studentId,mssv } = req.body.data;
+  console.log(req.body)
+  if (!classId||!studentId) {  
+    res.status(400).send({ message: "Please provide all fill!" });
+  }
+  enrollments
+  .update(
+    {
+     mssv:mssv
+    },
+    {
+      where: { classId:classId,studentId:studentId },
+    }
+  )
+  .then((result) => {
+    if (result[0] === 1) {
+      res.status(200).send({ message: "Update Success!" });
+    } else {
+      res
+        .status(404)
+        .send({ message: "Student not found or no changes to update." });
+    }
+  })
+  .catch((err) => {
+    res.status(500).send({ message: err.message });
+  });
+}
+exports.checkmssv=(req,res)=>{
+  const { classId,mssv } = req.query;
+  console.log(classId,mssv)
+
+  if (!classId||!mssv) {  
+    res.status(400).send({ message: "Please provide all fill!" });
+  }
+enrollments.findOne({
+  where: { classId: classId, mssv: mssv.toString()}
+})
+.then((result) => {
+  if (result) {
+    res.status(400).send({ message: "Already exists!", data: false });
+  } else {
+    res.status(200).send({ message: "Success!", data: true });
+  }
+})
+.catch((error) => {
+  // Handle any errors that occurred during the query
+  console.error("Error:", error);
+  res.status(500).send({ message: "Internal Server Error", data: null });
+});}
+
+exports.checkmssvhaveuserid=(req,res)=>{
+  const { classId,userId } = req.query;
+
+  if (!classId||!userId) {  
+    res.status(400).send({ message: "Please provide all fill!" });
+  }
+enrollments.findOne({
+  where: { classId: classId, userId:userId}
+})
+.then((result) => {
+  if (result.mssv) {
+    res.status(400).send({ message: "Already exists!", data: false });
+  } else {
+    res.status(200).send({ message: "Success!", data: true });
+  }
+})
+.catch((error) => {
+  // Handle any errors that occurred during the queryz
+  console.error("Error:", error);
+  res.status(500).send({ message: "Internal Server Error", data: null });
+});
+}
