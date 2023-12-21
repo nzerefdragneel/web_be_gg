@@ -1,4 +1,4 @@
-const { now } = require("sequelize/types/utils");
+
 const db = require("../models");
 const mailer = require("../utils/mailer");
 const classes = db.classes;
@@ -476,13 +476,13 @@ exports.checkmssvhaveuserid=(req,res)=>{
     res.status(400).send({ message: "Please provide all fill!" });
   }
 enrollments.findOne({
-  where: { classId: classId, userId:userId}
+  where: { classId: classId, studentId:userId}
 })
 .then((result) => {
   if (result.mssv) {
     res.status(400).send({ message: "Already exists!", data: false });
   } else {
-    res.status(200).send({ message: "Success!", data: true });
+    res.status(200).send({ message: "No have!", data: true });
   }
 })
 .catch((error) => {
