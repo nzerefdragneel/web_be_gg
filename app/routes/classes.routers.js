@@ -14,4 +14,7 @@ module.exports = function (app) {
   app.get("/api/classes/getteacherinclass", classes.getTeacherInClass);
   app.get("/api/classes/istecher", classes.isTeacher);
   app.get("/api/classes/getlink", classes.generateClassroomLink);
+  app.post("/api/classes/updatestudentid",classes.updatemssv);
+  app.get("/api/classes/checkmssv",classes.checkmssv);
+  app.get("/api/classes/checkhavemssv",classes.checkmssvhaveuserid);
 };
