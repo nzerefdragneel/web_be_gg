@@ -1,4 +1,3 @@
-
 const db = require("../models");
 const mailer = require("../utils/mailer");
 const classes = db.classes;
@@ -151,6 +150,70 @@ exports.acceptInvitation = async (req, res) => {
           return res.status(200).send({ message: "Success!" });
         });
     }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: err.message });
+  }
+};
+
+exports.addStudents = async (req, res) => {
+  try {
+    const data = req.body;
+
+    const classId = data.classId.id;
+    const students = data.students;
+
+    console.log(classId, students);
+
+    if (!classId || !students) {
+      return res.status(400).send({ message: "Invalid request" });
+    }
+
+    const classData = await classes.findByPk(classId);
+
+    if (!classData) {
+      return res.status(404).send({ message: "Class not found!" });
+    }
+
+    let existsCount = 0;
+    let notFoundCount = 0;
+
+    for (const student of students) {
+      await users
+        .findOne({ where: { id: student.studentId } })
+        .then(async (result) => {
+          if (result) {
+            await enrollments
+              .findOne({
+                where: { classId: classId, studentId: student.studentId },
+              })
+              .then((eResult) => {
+                if (!eResult) {
+                  enrollments
+                    .create({
+                      classId: classId,
+                      studentId: student.studentId,
+                      enrollmentDate: new Date(Date.now()),
+                      accept: true,
+                    })
+                    .catch((err) => {
+                      console.error(err);
+                      res.status(500).send({ message: err.message });
+                    });
+                } else {
+                  existsCount++;
+                }
+              });
+          } else {
+            notFoundCount++;
+          }
+        });
+    }
+
+    return res.status(200).send({
+      message: "Add students success!",
+      data: { existsCount: existsCount, notFoundCount: notFoundCount },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: err.message });
@@ -422,76 +485,79 @@ exports.getTeacherInClass = (req, res) => {
       res.status(500).send({ message: err.message });
     });
 };
-exports.updatemssv=(req,res)=>{
-  const { classId,studentId,mssv } = req.body.data;
-  console.log(req.body)
-  if (!classId||!studentId) {  
+exports.updatemssv = (req, res) => {
+  const { classId, studentId, mssv } = req.body.data;
+  console.log(req.body);
+  if (!classId || !studentId) {
     res.status(400).send({ message: "Please provide all fill!" });
   }
   enrollments
-  .update(
-    {
-     mssv:mssv
-    },
-    {
-      where: { classId:classId,studentId:studentId },
-    }
-  )
-  .then((result) => {
-    if (result[0] === 1) {
-      res.status(200).send({ message: "Update Success!" });
-    } else {
-      res
-        .status(404)
-        .send({ message: "Student not found or no changes to update." });
-    }
-  })
-  .catch((err) => {
-    res.status(500).send({ message: err.message });
-  });
-}
-exports.checkmssv=(req,res)=>{
-  const { classId,mssv } = req.query;
-  console.log(classId,mssv)
+    .update(
+      {
+        mssv: mssv,
+      },
+      {
+        where: { classId: classId, studentId: studentId },
+      }
+    )
+    .then((result) => {
+      if (result[0] === 1) {
+        res.status(200).send({ message: "Update Success!" });
+      } else {
+        res
+          .status(404)
+          .send({ message: "Student not found or no changes to update." });
+      }
+    })
+    .catch((err) => {
+      res.status(500).send({ message: err.message });
+    });
+};
+exports.checkmssv = (req, res) => {
+  const { classId, mssv } = req.query;
+  console.log(classId, mssv);
 
-  if (!classId||!mssv) {  
+  if (!classId || !mssv) {
     res.status(400).send({ message: "Please provide all fill!" });
   }
-enrollments.findOne({
-  where: { classId: classId, mssv: mssv.toString()}
-})
-.then((result) => {
-  if (result) {
-    res.status(400).send({ message: "Already exists!", data: false });
-  } else {
-    res.status(200).send({ message: "Success!", data: true });
-  }
-})
-.catch((error) => {
-  // Handle any errors that occurred during the query
-  console.error("Error:", error);
-  res.status(500).send({ message: "Internal Server Error", data: null });
-});}
+  enrollments
+    .findOne({
+      where: { classId: classId, mssv: mssv.toString() },
+    })
+    .then((result) => {
+      if (result) {
+        res.status(400).send({ message: "Already exists!", data: false });
+      } else {
+        res.status(200).send({ message: "Success!", data: true });
+      }
+    })
+    .catch((error) => {
+      // Handle any errors that occurred during the query
+      console.error("Error:", error);
+      res.status(500).send({ message: "Internal Server Error", data: null });
+    });
+};
 
-exports.checkmssvhaveuserid=(req,res)=>{
-  const { classId,userId } = req.query;
+exports.checkmssvhaveuserid = (req, res) => {
+  const { classId, userId } = req.query;
 
-  if (!classId||!userId) {  
+  if (!classId || !userId) {
     res.status(400).send({ message: "Please provide all fill!" });
   }
-enrollments.findOne({
-  where: { classId: classId, studentId:userId}
-})
-.then((result) => {
-  if (result.mssv) {
-    res.status(400).send({ message: "Already exists!", data: false });
-  } else {
-    res.status(200).send({ message: "No have!", data: true });
-  }
-})
-.catch((error) => {
-  // Handle any errors that occurred during the queryz
-  console.error("Error:", error);
-  res.status(500).send({ message: "Internal Server Error", data: null });
-});
-}
+  enrollments
+    .findOne({
+      where: { classId: classId, studentId: userId },
+    })
+    .then((result) => {
+      if (result.mssv) {
+        res.status(400).send({ message: "Already exists!", data: false });
+      } else {
+        res.status(200).send({ message: "No have!", data: true });
+      }
+    })
+    .catch((error) => {
+      // Handle any errors that occurred during the queryz
+      console.error("Error:", error);
+      res.status(500).send({ message: "Internal Server Error", data: null });
+    });
+};
