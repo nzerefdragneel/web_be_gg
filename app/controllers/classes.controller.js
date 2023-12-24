@@ -178,34 +178,40 @@ exports.addStudents = async (req, res) => {
     let existsCount = 0;
     let notFoundCount = 0;
 
+    let availableAccounts = [];
+
     for (const student of students) {
       await users
         .findOne({ where: { id: student.studentId } })
-        .then(async (result) => {
+        .then((result) => {
           if (result) {
-            await enrollments
-              .findOne({
-                where: { classId: classId, studentId: student.studentId },
-              })
-              .then((eResult) => {
-                if (!eResult) {
-                  enrollments
-                    .create({
-                      classId: classId,
-                      studentId: student.studentId,
-                      enrollmentDate: new Date(Date.now()),
-                      accept: true,
-                    })
-                    .catch((err) => {
-                      console.error(err);
-                      res.status(500).send({ message: err.message });
-                    });
-                } else {
-                  existsCount++;
-                }
-              });
+            availableAccounts.push(student);
           } else {
             notFoundCount++;
+          }
+        });
+    }
+
+    for (const student of availableAccounts) {
+      await enrollments
+        .findOne({
+          where: { classId: classId, studentId: student.studentId },
+        })
+        .then((eResult) => {
+          if (!eResult) {
+            enrollments
+              .create({
+                classId: classId,
+                studentId: student.studentId,
+                enrollmentDate: new Date(Date.now()),
+                accept: true,
+              })
+              .catch((err) => {
+                console.error(err);
+                res.status(500).send({ message: err.message });
+              });
+          } else {
+            existsCount++;
           }
         });
     }
