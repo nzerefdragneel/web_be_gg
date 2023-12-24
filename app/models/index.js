@@ -39,17 +39,18 @@ db.assignment.belongsTo(db.user, { foreignKey: 'teacherId', as: 'teacherassignme
 db.enrollment.belongsTo(db.user, { foreignKey: 'studentId', as: 'studentenrollment' });
 db.enrollment.belongsTo(db.classes, { foreignKey: 'classId', as: 'classenrollment' });
 //foreign key scorings
-db.scorings.belongsTo(db.teachingAssignments, { foreignKey: 'assignmentId', as: 'assignmentScoring' });
-db.scorings.belongsTo(db.enrollment, {
-  foreignKey: ['studentId', 'classId'],
-  targetKey: ['studentId', 'classId'],
-  as: 'enrollmentScoring'
-});
+db.scorings.belongsTo(db.assignment, { foreignKey: 'assignmentId', as: 'assignmentScoring' });
+db.scorings.belongsTo(db.enrollment, { foreignKey: 'studentId', as: 'enrollmentScoring' });
+db.scorings.belongsTo(db.enrollment, { foreignKey: 'classId', as: 'classEnrollmentScoring' });
 // Assuming 'teachers' is your model for teachers
 db.scorings.belongsTo(db.teachers, {
-  foreignKey: ['teacherId', 'classId'],
-  targetKey: ['teacherId', 'classId'],
+  foreignKey: 'teacherId',
   as: 'teacherScoring'
+});
+
+db.scorings.belongsTo(db.teachers, {
+  foreignKey: 'classId',
+  as: 'classScoring'
 });
 
 
