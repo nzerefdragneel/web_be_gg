@@ -260,6 +260,15 @@ exports.getAllClass = async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 };
+exports.getAllClasses = async (req, res) => {
+  try {
+    const data = await classes.findAll();
+    res.status(200).send(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: err.message });
+  }
+};
 // Assuming getPagination and getPagingData functions are defined elsewhere in your code
 
 //xóa các bảng liên quan đến class

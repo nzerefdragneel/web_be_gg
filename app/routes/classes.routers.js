@@ -2,6 +2,7 @@ const classes = require("../controllers/classes.controller");
 module.exports = function (app) {
   app.post("/api/classes/create", classes.createClass);
   app.get("/api/classes/getall", classes.getAllClass);
+  app.get("/api/classes/getallclasses", classes.getAllClasses);
   app.post("/api/classes/delete", classes.deleteClass);
   app.post("/api/classes/update", classes.updateClass);
   app.get("/api/classes/getbyid", classes.getClassById);

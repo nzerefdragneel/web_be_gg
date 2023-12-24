@@ -39,4 +39,5 @@ module.exports = function(app) {
     controller.edituser
   );
   app.get("/api/test/getroles",controller.getuserroles);
+  app.get("/api/test/getalluser",controller.getAllUser);
 };
