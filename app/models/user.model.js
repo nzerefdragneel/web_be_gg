@@ -32,6 +32,9 @@ module.exports = (sequelize, Sequelize) => {
     fbID:{
       type: Sequelize.STRING,
     },
+    fullname:{
+      type:Sequelize.STRING,
+    }
   });
 
   return User;
