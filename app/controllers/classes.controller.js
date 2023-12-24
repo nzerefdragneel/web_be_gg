@@ -193,7 +193,6 @@ exports.getAllClass = async (req, res) => {
 };
 exports.getAllClasses = async (req, res) => {
   try {
-    
     const data = await classes.findAll();
     res.status(200).send(data);
   } catch (err) {
