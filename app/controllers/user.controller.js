@@ -34,6 +34,8 @@ exports.edituser = (req, res) => {
         user.username = req.body.username;
         user.email = req.body.email;
         user.updatedAt = Date.now().toString();
+        user.fullname=req.body.fullname;
+        user.active=req.body.active;
         if (req.body.password != "" || req.body.password != null) {
           var has = bcrypt.hashSync(req.body.password, 8);
           user.password = has;
@@ -136,3 +138,33 @@ exports.getAllUser = async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 };
+exports.getuserbyid=(req,res)=>{
+  User.findByPk(req.query.userId)
+  .then((user) => {
+    if (!user) {
+      res.status(500).send({ message: "User not found!" });
+    }
+    res.status(200).send({
+      message: "Success!",
+      user:user
+    });
+  })
+  .catch((err) => {
+    res.status(500).send({ message: err.message });
+  });
+}
+exports.getstatus=(req,res)=>{
+  User.findByPk(req.query.userId)
+  .then((user) => {
+    if (!user) {
+      res.status(500).send({ message: "User not found!" });
+    }
+    res.status(200).send({
+      message: "Success!",
+      status:user.active
+    });
+  })
+  .catch((err) => {
+    res.status(500).send({ message: err.message });
+  });
+}
