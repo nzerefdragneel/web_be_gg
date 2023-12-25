@@ -23,7 +23,6 @@ module.exports = (sequelize, Sequelize) => {
     assignmentId: {
         type: Sequelize.INTEGER,
     },
-
     });
   
     return Scorings;
