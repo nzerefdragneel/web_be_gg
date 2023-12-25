@@ -34,7 +34,10 @@ module.exports = (sequelize, Sequelize) => {
     },
     fullname:{
       type:Sequelize.STRING,
-    }
+    },
+    active: {
+      type: Sequelize.BOOLEAN,
+    },
   });
 
   return User;
