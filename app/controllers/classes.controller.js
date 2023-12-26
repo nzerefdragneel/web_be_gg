@@ -5,6 +5,7 @@ const teachers = db.teachers;
 const users = db.user;
 const enrollments = db.enrollment;
 const assignment = db.assignment;
+const scorings = db.scorings;
 const crypto = require("crypto");
 require("dotenv").config();
 
@@ -226,6 +227,64 @@ exports.addStudents = async (req, res) => {
   }
 };
 
+exports.getScoringsInClass = async (req, res) => {
+  try {
+    const classId = req.query.id;
+    if (!classId) {
+      return res.status(400).send({ message: "Please provide class id!" });
+    }
+
+    const data = [];
+
+    const scale = {};
+
+    await assignment
+      .findAll({
+        where: { classId: classId },
+      })
+      .then((rawData) => {
+        rawData.forEach((element) => {
+          scale[element.assignmentId] = element.scale;
+        });
+      });
+
+    await scorings
+      .findAll({
+        where: { classId: classId },
+      })
+      .then((rawData) => {
+        //map student with assignment as an object
+        rawData.forEach((element) => {
+          const studentId = element.studentId;
+          const assignmentId = element.assignmentId;
+          const score = element.score;
+
+          const student = data.find((item) => item.studentId === studentId);
+
+          if (student) {
+            student.assignments.push({
+              assignmentId,
+              score,
+              scale: scale[assignmentId],
+            });
+          } else {
+            data.push({
+              studentId,
+              assignments: [
+                { assignmentId, score, scale: scale[assignmentId] },
+              ],
+            });
+          }
+        });
+      });
+
+    res.status(200).send({ message: "Success!", data: data });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: err.message });
+  }
+};
+
 const getPagination = (page, size) => {
   const limit = size ? +size : 10;
   const offset = page ? (page - 1) * limit : 0;
@@ -427,6 +486,23 @@ exports.getStudentInClass = (req, res) => {
           as: "studentenrollment", // Assuming there is a foreign key named userId in the Teacher model
         },
       ],
+    })
+    .then((data) => {
+      res.status(200).send({ message: "Success!", data: data });
+    })
+    .catch((err) => {
+      res.status(500).send({ message: err.message });
+    });
+};
+
+exports.getAssignmentsInClass = (req, res) => {
+  const { id } = req.query;
+  if (!id) {
+    res.status(400).send({ message: "Please provide class id!" });
+  }
+  assignment
+    .findAll({
+      where: { classId: id },
     })
     .then((data) => {
       res.status(200).send({ message: "Success!", data: data });

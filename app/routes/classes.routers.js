@@ -6,6 +6,8 @@ module.exports = function (app) {
   app.post("/api/classes/delete", classes.deleteClass);
   app.post("/api/classes/update", classes.updateClass);
   app.get("/api/classes/getbyid", classes.getClassById);
+  app.get("/api/classes/getassignments", classes.getAssignmentsInClass);
+  app.get("/api/classes/getscorings", classes.getScoringsInClass);
   app.get("/api/classes/getbyteacherid", classes.getClassByTeacherId);
   app.get("/api/classes/getbystudentid", classes.getClassByStudentId);
   app.post("/api/classes/addStudents", classes.addStudents);
