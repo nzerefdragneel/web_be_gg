@@ -4,16 +4,16 @@ const User = db.user;
 const jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
 const passport = require("passport");
-var localStrategy = require('passport-local').Strategy;
-const FacebookStrategy = require('passport-facebook');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
+var localStrategy = require("passport-local").Strategy;
+const FacebookStrategy = require("passport-facebook");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
 require("dotenv").config();
 const mailer = require("../utils/mailer");
 const { types } = require("pg");
 const signup = (req, res) => {
     // Save User to Database
-  
+
     User.create({
         username: req.body.username,
         email: req.body.email,
@@ -21,7 +21,6 @@ const signup = (req, res) => {
         createdat: Date.now().toString(),
     })
         .then((user) => {
-
             let emailToken = bcrypt.hashSync(req.body.email, 10);
             mailer
                 .sendMail(
@@ -35,7 +34,6 @@ const signup = (req, res) => {
                             "User registered successfully! Please check your email to verify your account.",
                     });
                 });
-
         })
         .catch((err) => {
             res.status(400).send({
@@ -126,15 +124,13 @@ const verify = (req, res) => {
         });
 };
 
-
 //Using Passportjs
 const signin = (req, res, next) => {
-
     const user = {
         username: req.body.username,
         password: req.body.password,
         rememberMe: true,
-    }
+    };
 
     if (!user.username) {
         return res.status(404).send({ message: "User Not found." });
@@ -145,199 +141,258 @@ const signin = (req, res, next) => {
             message: "Invalid Password!",
         });
     }
-    return passport.authenticate('signin', { session: false }, (err, passportUser, info) => {
-        if (err) {
-            return res.status(500).send({ message: err.message });
-            // return next(err)
+    return passport.authenticate(
+        "signin",
+        { session: false },
+        (err, passportUser, info) => {
+            if (err) {
+                // return res.status(500).send({ message: err.message });
+                return next(err);
+            }
+            const password = req.body.password;
+            const accessToken = jwt.sign({ password }, config.secret, {
+                expiresIn: 360000, // 1 hour
+            });
+            console.log("oke", passportUser);
+            if (passportUser) {
+                return res.status(200).send({
+                    id: passportUser.id,
+                    username: passportUser.username,
+                    email: passportUser.email,
+                    accessToken: accessToken,
+                    exp: 360000,
+                });
+            }
+            console.log("err", info);
+            return res.status(400).send({ message: info.errors });
         }
-        const password = req.body.password;
-        const accessToken = jwt.sign({ password }, config.secret, {
-            expiresIn: 360000, // 1 hour
-        });
-        console.log('oke',passportUser)
-        if (passportUser) {
-            return res.status(200).send({
-                id: passportUser.id,
-                username: passportUser.username,
-                email: passportUser.email,
-                accessToken: accessToken,
-                exp: 360000
+    )(req, res, next);
+};
+
+passport.use(
+    "signin",
+    new localStrategy(
+        {
+            passReqToCallback: true,
+        },
+        (req, username, password, done) => {
+            User.findOne({
+                where: {
+                    username: req.body.username,
+                },
+            })
+                .then((user) => {
+                    console.log(user);
+                    if (!user) {
+                        return done(null, false, {
+                            errors: "Username or password",
+                        });
+                    }
+                    console.log(bcrypt.hashSync(req.body.password, 8));
+                    const passwordIsValid = bcrypt.compareSync(
+                        req.body.password,
+                        user.password
+                    );
+                    console.log(passwordIsValid);
+                    if (!passwordIsValid) {
+                        return done(null, false, {
+                            errors: "Username or password",
+                        });
+                    }
+                    console.log(user);
+                    if (
+                        !user.verified ||
+                        user.verified === false ||
+                        user.verified === null
+                    ) {
+                        return done(null, false, {
+                            errors: "Please verify your email first!",
+                        });
+                    }
+                    if (true) {
+                        req.session.cookie.maxAge = 60 * 60 * 1000; // Cookie expires after 1 hour
+                    } else {
+                        req.session.cookie.expires = false; // Cookie expires at end of session
+                    }
+
+                    return done(null, user);
+                })
+                .catch(done);
+        }
+    )
+);
+
+passport.use(
+    "google",
+    new GoogleStrategy(
+        {
+            clientID: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            callbackURL: process.env.GOOGLE_CALLBACK_URL,
+        },
+        function (accessToken, refreshToken, profile, done) {
+            process.nextTick(function () {
+                //Check whether the User exists or not using profile.id
+                if (config.use_database) {
+                    //Further code of Database.
+                }
+                return done(null, profile);
             });
         }
-        console.log("err",info)
-        return res.status(400).send({message:info.errors});
-    })(req, res, next);
-}
+    )
+);
 
-passport.use('signin', new localStrategy({
-    passReqToCallback: true
-}, (req, username, password, done) => {
-
-    User.findOne({
-        where: {
-            username: req.body.username,
-        },
-    })
-        .then((user) => {
-            console.log(user);
-            if (!user) {
-                return done(null, false, { errors: 'Username or password' });
-            }
-            console.log( bcrypt.hashSync(req.body.password, 8));
-            const passwordIsValid = bcrypt.compareSync(req.body.password, user.password);
-            console.log(passwordIsValid)
-            if (!passwordIsValid) {
-                return done(null, false, { errors: 'Username or password'});
-            }
-            console.log(user);
-            if (!user.verified || user.verified === false||user.verified===null) {
-
-              return  done(null, false, { errors: 'Please verify your email first!' } );
-            }
-            if (true) {
-                req.session.cookie.maxAge = 60 * 60 * 1000; // Cookie expires after 1 hour
-            } else {
-                req.session.cookie.expires = false; // Cookie expires at end of session
-            }
-
-            return done(null, user);
-        })
-        .catch(done);
-        }
-))
-
-passport.use('google', new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL
-},
-    function (accessToken, refreshToken, profile, done) {
-        process.nextTick(function () {
-            //Check whether the User exists or not using profile.id
-            if (config.use_database) {
-                //Further code of Database.
-            }
-            return done(null, profile);
-        });
-    }
-));
-
-const googleSignin = passport.authenticate('google', { scope: ['profile', 'email'] })
+const googleSignin = passport.authenticate("google", {
+    scope: ["profile", "email"],
+});
 
 const googleSigninCallback = (req, res, next) => {
-    passport.authenticate('google', { session: false }, (err, profile, info) => {
-        if (err) {
-            return next(err)
-        }
-        if (profile) {
-            const json = profile._json;
+    passport.authenticate(
+        "google",
+        { session: false },
+        (err, profile, info) => {
+            if (err) {
+                return next(err);
+            }
+            if (profile) {
+                const json = profile._json;
 
-            User.findOne({
-                where: {
-                    email: json.email,
-                    type: 'google'
-                }
-            }).then((user) => {
-                if (user) {
-                    const accessToken = jwt.sign({ user }, config.secret, {
-                        expiresIn: 3600, // 1 hour
-                    });
-                    return res.status(302).redirect(`${process.env.APP_URL}?accessToken=${accessToken}&haveAccount=true`);
-                }
-
-                //Thêm user vào database
-                User.create({
-                    username: json.name,
-                    email: json.email,
-                    type: 'google',
-                    // password: bcrypt.hashSync(req.body.password, 8),
-                    createdat: Date.now().toString(),
-                })
-                    .then((user) => {
+                User.findOne({
+                    where: {
+                        email: json.email,
+                        type: "google",
+                    },
+                }).then((user) => {
+                    if (user) {
                         const accessToken = jwt.sign({ user }, config.secret, {
                             expiresIn: 3600, // 1 hour
                         });
-                        return res.status(302).redirect(`${process.env.APP_URL}?accessToken=${accessToken}&haveAccount=true`);
+                        return res
+                            .status(302)
+                            .redirect(
+                                `${process.env.APP_URL}?accessToken=${accessToken}&haveAccount=true`
+                            );
+                    }
+
+                    //Thêm user vào database
+                    User.create({
+                        username: json.name,
+                        email: json.email,
+                        type: "google",
+                        // password: bcrypt.hashSync(req.body.password, 8),
+                        createdat: Date.now().toString(),
                     })
-                    .catch((err) => {
-                        res.status(400).send({
-                            message: err.message,
+                        .then((user) => {
+                            const accessToken = jwt.sign(
+                                { user },
+                                config.secret,
+                                {
+                                    expiresIn: 3600, // 1 hour
+                                }
+                            );
+                            return res
+                                .status(302)
+                                .redirect(
+                                    `${process.env.APP_URL}?accessToken=${accessToken}&haveAccount=true`
+                                );
+                        })
+                        .catch((err) => {
+                            res.status(400).send({
+                                message: err.message,
+                            });
                         });
-                    });
-            })
-        }
-        return res.status(400).info;
-    })(req, res, next);
-}
-
-passport.use('facebook', new FacebookStrategy({
-    clientID: process.env.FACEBOOK_APP_ID,
-    clientSecret: process.env.FACEBOOK_SECRET_KEY,
-    callbackURL: process.env.FACEBOOK_CALLBACK_URL
-},
-    function (accessToken, refreshToken, profile, done) {
-        process.nextTick(function () {
-            //Check whether the User exists or not using profile.id
-            if (config.use_database) {
-                //Further code of Database.
+                });
             }
-            console.log(profile)
-            return done(null, profile);
-        });
-    }
-))
+            return res.status(400).info;
+        }
+    )(req, res, next);
+};
 
-const facebookSignin = passport.authenticate('facebook');
+passport.use(
+    "facebook",
+    new FacebookStrategy(
+        {
+            clientID: process.env.FACEBOOK_APP_ID,
+            clientSecret: process.env.FACEBOOK_SECRET_KEY,
+            callbackURL: process.env.FACEBOOK_CALLBACK_URL,
+        },
+        function (accessToken, refreshToken, profile, done) {
+            process.nextTick(function () {
+                //Check whether the User exists or not using profile.id
+                if (config.use_database) {
+                    //Further code of Database.
+                }
+                return done(null, profile);
+            });
+        }
+    )
+);
+
+const facebookSignin = passport.authenticate("facebook");
 
 const facebookSigninCallback = (req, res, next) => {
-    passport.authenticate('facebook', { session: false }, (err, profile, info) => {
-        if (err) {
-            return next(err)
-        }
-        if (profile) {
-            const json = profile._json;
+    passport.authenticate(
+        "facebook",
+        { session: false },
+        (err, profile, info) => {
+            if (err) {
+                return next(err);
+            }
+            if (profile) {
+                const json = profile._json;
 
-            console.log(profile)
-
-            User.findOne({
-                where: {
-                    fbID: json.id,
-                    type: 'facebook'
-                }
-            }).then((user) => {
-                if (user) {
-                    const accessToken = jwt.sign({ user }, config.secret, {
-                        expiresIn: 3600, // 1 hour
-                    });
-                    console.log(true)
-                    return res.status(302).redirect(`${process.env.APP_URL}?accessToken=${accessToken}&haveAccount=true`);
-                }
-
-                //Thêm user vào database
-                User.create({
-                    username: json.name,
-                    fbID: json.id,
-                    type: 'facebook',
-                    // password: bcrypt.hashSync(req.body.password, 8),
-                    createdat: Date.now().toString(),
-                })
-                    .then((user) => {
+                User.findOne({
+                    where: {
+                        fbID: json.id,
+                        type: "facebook",
+                    },
+                }).then((user) => {
+                    if (user) {
                         const accessToken = jwt.sign({ user }, config.secret, {
                             expiresIn: 3600, // 1 hour
                         });
-                        console.log(false)
-                        return res.status(302).redirect(`${process.env.APP_URL}?accessToken=${accessToken}&haveAccount=true`);
+                        console.log(true);
+                        return res
+                            .status(302)
+                            .redirect(
+                                `${process.env.APP_URL}?accessToken=${accessToken}&haveAccount=true`
+                            );
+                    }
+
+                    //Thêm user vào database
+                    User.create({
+                        username: json.name,
+                        fbID: json.id,
+                        type: "facebook",
+                        // password: bcrypt.hashSync(req.body.password, 8),
+                        createdat: Date.now().toString(),
                     })
-                    .catch((err) => {
-                        res.status(400).send({
-                            message: err.message,
+                        .then((user) => {
+                            const accessToken = jwt.sign(
+                                { user },
+                                config.secret,
+                                {
+                                    expiresIn: 3600, // 1 hour
+                                }
+                            );
+                            console.log(false);
+                            return res
+                                .status(302)
+                                .redirect(
+                                    `${process.env.APP_URL}?accessToken=${accessToken}&haveAccount=true`
+                                );
+                        })
+                        .catch((err) => {
+                            res.status(400).send({
+                                message: err.message,
+                            });
                         });
-                    });
-            })
+                });
+            }
+            return res.status(400).info;
         }
-        return res.status(400).info;
-    })(req, res, next);
-}
+    )(req, res, next);
+};
 
 module.exports = {
     signin,

@@ -1,12 +1,15 @@
 const db = require("../models");
+const mailer = require("../utils/mailer");
 const classes = db.classes;
 const teachers = db.teachers;
 const users = db.user;
 const enrollments = db.enrollment;
 const assignment = db.assignment;
+const crypto = require("crypto");
+require("dotenv").config();
 const gradeStructures = db.gradeStructures;
 
-exports.CreateClass = async (req, res) => {
+exports.createClass = async (req, res) => {
     try {
         const { className, description, teacherId } = req.body;
 
@@ -49,6 +52,115 @@ exports.CreateClass = async (req, res) => {
         res.status(500).send({ message: err.message });
     }
 };
+
+function encrypt(text, password) {
+    const iv = crypto.randomBytes(16);
+
+    // Hash password
+    const key = crypto.scryptSync(password, "salt", 24);
+
+    const cipher = crypto.createCipheriv("aes192", key, iv);
+
+    let encrypted = cipher.update(text, "utf8", "hex");
+
+    encrypted += cipher.final("hex");
+
+    return iv.toString("hex") + ":" + encrypted;
+}
+
+function decrypt(encrypted, password) {
+    const textParts = encrypted.split(":");
+    const iv = Buffer.from(textParts.shift(), "hex");
+
+    const key = crypto.scryptSync(password, "salt", 24);
+
+    const encryptedText = textParts.join(":");
+
+    const decipher = crypto.createDecipheriv("aes192", key, iv);
+
+    let decrypted = decipher.update(encryptedText, "hex", "utf8");
+
+    decrypted += decipher.final("utf8");
+
+    return decrypted;
+}
+
+exports.generateClassroomLink = async (req, res) => {
+    const { classId, isTeacher } = req.query;
+    if (!classId) {
+        return res
+            .status(400)
+            .send({ message: "Please fill all required fields!" });
+    }
+
+    const hashedClassId = encrypt(classId, process.env.SECRET);
+    const hashedtecher = encrypt(isTeacher, process.env.SECRET);
+
+    const link = `${process.env.APP_URL}/invitation?id=${hashedClassId}&isTeacher=${hashedtecher}`;
+    return res.status(200).send({ message: "Success!", data: link });
+};
+
+exports.acceptInvitation = async (req, res) => {
+    try {
+        const { userId, classId, isTeacher } = req.body;
+
+        if (!userId || !classId) {
+            return res.status(400).send({ message: "Invalid invitation" });
+        }
+
+        const decryptedClassId = decrypt(classId, process.env.SECRET);
+        const decryptedIsTeacher = decrypt(isTeacher, process.env.SECRET);
+        console.log(decryptedClassId);
+        console.log(decryptedIsTeacher);
+
+        if (decryptedIsTeacher === "true") {
+            teachers
+                .findOne({
+                    where: { classId: decryptedClassId, teacherId: userId },
+                })
+                .then((result) => {
+                    if (!result) {
+                        teachers
+                            .create({
+                                classId: decryptedClassId,
+                                teacherId: userId,
+                                accept: true,
+                            })
+                            .catch((err) => {
+                                console.error(err);
+                                res.status(500).send({ message: err.message });
+                            });
+                    }
+                    return res.status(200).send({ message: "Success!" });
+                });
+        } else {
+            enrollments
+                .findOne({
+                    where: { classId: decryptedClassId, studentId: userId },
+                })
+                .then((result) => {
+                    if (!result) {
+                        enrollments
+                            .create({
+                                classId: decryptedClassId,
+                                studentId: userId,
+                                enrollmentDate: new Date(Date.now()),
+                                accept: true,
+                            })
+                            .catch((err) => {
+                                console.error(err);
+                                res.status(500).send({ message: err.message });
+                            });
+                    }
+                    return res.status(200).send({ message: "Success!" });
+                });
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: err.message });
+    }
+};
+
 const getPagination = (page, size) => {
     const limit = size ? +size : 10;
     const offset = page ? (page - 1) * limit : 0;
@@ -83,6 +195,15 @@ exports.getAllClass = async (req, res) => {
         res.status(500).send({ message: err.message });
     }
 };
+exports.getAllClasses = async (req, res) => {
+    try {
+        const data = await classes.findAll();
+        res.status(200).send(data);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: err.message });
+    }
+};
 // Assuming getPagination and getPagingData functions are defined elsewhere in your code
 
 //xóa các bảng liên quan đến class
@@ -90,6 +211,12 @@ exports.getAllClass = async (req, res) => {
 exports.deleteClass = async (req, res) => {
     try {
         const { id } = req.body;
+        if (!id) {
+            return res
+                .status(400)
+                .send({ message: "Please fill all required fields!" });
+        }
+
         console.log(req.body);
         await assignment.destroy({
             where: { classId: id },
@@ -153,6 +280,9 @@ exports.updateClass = (req, res) => {
 
 exports.getClassById = (req, res) => {
     const { id } = req.query;
+    if (!id) {
+        res.status(400).send({ message: "Please provide class id!" });
+    }
     classes
         .findOne({
             where: { id: id },
@@ -166,6 +296,9 @@ exports.getClassById = (req, res) => {
 };
 exports.getClassByTeacherId = (req, res) => {
     const { id } = req.query;
+    if (!id) {
+        res.status(400).send({ message: "Please provide teacher id!" });
+    }
     teachers
         .findAll({
             where: { teacherId: id },
@@ -179,6 +312,9 @@ exports.getClassByTeacherId = (req, res) => {
 };
 exports.getClassByStudentId = (req, res) => {
     const { id } = req.query;
+    if (!id) {
+        res.status(400).send({ message: "Please provide student id!" });
+    }
     enrollments
         .findAll({
             where: { studentId: id },
@@ -190,51 +326,36 @@ exports.getClassByStudentId = (req, res) => {
             res.status(500).send({ message: err.message });
         });
 };
+
 exports.inviteStudent = (req, res) => {
-    const { id, studentId } = req.body;
-    console.log(req.body);
-    enrollments
-        .create({
-            classId: id,
-            studentId: studentId,
-            enrollmentDate: new Date(Date.now()),
-        })
-        .then((data) => {
-            res.status(200).send({ message: "Invite Success!" });
-        })
-        .catch((err) => {
-            res.status(500).send({ message: err.message });
+    const { studentEmail, classId } = req.query;
+    if (!studentEmail || !classId) {
+        res.status(400).send({
+            message: "Please provide student email and class id!",
         });
-};
-exports.studentacceptinvite = (req, res) => {
-    const { studentId, classId } = req.query;
-    console.log(studentId, classId);
-    enrollments
-        .update(
-            { accept: true }, // Assuming 'accepted' is the column that tracks acceptance
-            {
-                where: {
-                    studentId: studentId,
-                    classId: classId,
-                },
-            }
+    }
+    const hashedClassId = encrypt(classId, process.env.SECRET);
+    const hashedtecher = encrypt("false", process.env.SECRET);
+
+    mailer
+        .sendMail(
+            studentEmail,
+            "Invitation to join class",
+            `<p>Click <a href="${process.env.APP_URL}/invitation?id=${hashedClassId}&isTeacher=${hashedtecher}">here</a> to join your classroom.</p>`
         )
-        .then((result) => {
-            if (result[0] === 1) {
-                res.status(200).send({ message: "Acceptance Success!" });
-            } else {
-                res.status(404).send({
-                    message: "Enrollment not found or no change.",
-                });
-            }
-        })
-        .catch((err) => {
-            res.status(500).send({ message: err.message });
+        .then(() => {
+            res.status(201).send({
+                message:
+                    "Invitation sent! Please check your email to join the classroom.",
+            });
         });
 };
 
 exports.getStudentInClass = (req, res) => {
     const { id } = req.query;
+    if (!id) {
+        res.status(400).send({ message: "Please provide class id!" });
+    }
     enrollments
         .findAll({
             where: { classId: id, accept: true },
@@ -253,53 +374,55 @@ exports.getStudentInClass = (req, res) => {
             res.status(500).send({ message: err.message });
         });
 };
+
 exports.inviteTeacher = (req, res) => {
-    const { id, teacherId } = req.body;
-    teachers
-        .create({
-            classId: id,
-            teacherId: teacherId,
-        })
-        .then((data) => {
-            res.status(200).send({ message: "Invite Success!" });
-        })
-        .catch((err) => {
-            res.status(500).send({ message: err.message });
+    const { classId, teacherEmail } = req.query;
+    if (!teacherEmail || !classId) {
+        res.status(400).send({
+            message: "Please provide teacher email and class id!",
+        });
+    }
+
+    const hashedClassId = encrypt(classId, process.env.SECRET);
+    const hashedtecher = encrypt("true", process.env.SECRET);
+
+    mailer
+        .sendMail(
+            teacherEmail,
+            "Invitation to join class",
+            `<p>Click <a href="${process.env.APP_URL}/invitation?id=${hashedClassId}&isTeacher=${hashedtecher}">here</a> to join your classroom.</p>`
+        )
+        .then(() => {
+            res.status(201).send({
+                message:
+                    "Invitation sent! Please check your email to join the classroom.",
+            });
         });
 };
-exports.acceptTeacherInvitation = (req, res) => {
-    const { teacherId, classId } = req.query;
-
-    // Assuming you have a teachers table/model with an 'accepted' column
+exports.isTeacher = (req, res) => {
+    const { classId, userId } = req.query;
+    console.log(req.query);
+    if (!classId || !userId) {
+        res.status(400).send({
+            message: "Please provide class id and user id!",
+        });
+    }
     teachers
-        .update(
-            { accept: true }, // Assuming 'accepted' is the column that tracks acceptance
-            {
-                where: {
-                    teacherId: teacherId,
-                    classId: classId,
-                },
-            }
-        )
+        .findOne({ where: { classId: classId, teacherId: userId } })
         .then((result) => {
-            if (result[0] === 1) {
-                res.status(200).send({
-                    message: "Teacher Invitation Accepted!",
-                });
+            if (result) {
+                res.status(200).send({ message: "Success!", data: true });
             } else {
-                res.status(404).send({
-                    message:
-                        "Teacher invitation not found or no changes to update.",
-                });
+                res.status(200).send({ message: "Success!", data: false });
             }
-        })
-        .catch((err) => {
-            res.status(500).send({ message: err.message });
         });
 };
 
 exports.getTeacherInClass = (req, res) => {
     const { id } = req.query;
+    if (!id) {
+        res.status(400).send({ message: "Please provide class id!" });
+    }
     teachers
         .findAll({
             where: { classId: id, accept: true },
@@ -316,5 +439,93 @@ exports.getTeacherInClass = (req, res) => {
         })
         .catch((err) => {
             res.status(500).send({ message: err.message });
+        });
+};
+exports.updatemssv = (req, res) => {
+    const { classId, studentId, mssv } = req.body.data;
+    console.log(req.body);
+    if (!classId || !studentId) {
+        res.status(400).send({ message: "Please provide all fill!" });
+    }
+    enrollments
+        .update(
+            {
+                mssv: mssv,
+            },
+            {
+                where: { classId: classId, studentId: studentId },
+            }
+        )
+        .then((result) => {
+            if (result[0] === 1) {
+                res.status(200).send({ message: "Update Success!" });
+            } else {
+                res.status(404).send({
+                    message: "Student not found or no changes to update.",
+                });
+            }
+        })
+        .catch((err) => {
+            res.status(500).send({ message: err.message });
+        });
+};
+exports.checkmssv = (req, res) => {
+    const { classId, mssv } = req.query;
+    console.log(classId, mssv);
+
+    if (!classId || !mssv) {
+        res.status(400).send({ message: "Please provide all fill!" });
+    }
+    enrollments
+        .findOne({
+            where: { classId: classId, mssv: mssv.toString() },
+        })
+        .then((result) => {
+            if (result) {
+                res.status(400).send({
+                    message: "Already exists!",
+                    data: false,
+                });
+            } else {
+                res.status(200).send({ message: "Success!", data: true });
+            }
+        })
+        .catch((error) => {
+            // Handle any errors that occurred during the query
+            console.error("Error:", error);
+            res.status(500).send({
+                message: "Internal Server Error",
+                data: null,
+            });
+        });
+};
+
+exports.checkmssvhaveuserid = (req, res) => {
+    const { classId, userId } = req.query;
+
+    if (!classId || !userId) {
+        res.status(400).send({ message: "Please provide all fill!" });
+    }
+    enrollments
+        .findOne({
+            where: { classId: classId, studentId: userId },
+        })
+        .then((result) => {
+            if (result.mssv) {
+                res.status(400).send({
+                    message: "Already exists!",
+                    data: false,
+                });
+            } else {
+                res.status(200).send({ message: "No have!", data: true });
+            }
+        })
+        .catch((error) => {
+            // Handle any errors that occurred during the queryz
+            console.error("Error:", error);
+            res.status(500).send({
+                message: "Internal Server Error",
+                data: null,
+            });
         });
 };

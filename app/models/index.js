@@ -17,7 +17,7 @@ const sequelize = new Sequelize(config.DB, config.USER, config.PASSWORD, {
   ssl:true
 });*/
 const sequelize = new Sequelize(
-    "postgres://username:eMb5kLAT4Z3Bz7ykYqmXSzAY8wxRJkZb@dpg-cldh45eg1b2c73f7b63g-a.oregon-postgres.render.com/db_f2lf?ssl=true"
+  "postgres://username:eMb5kLAT4Z3Bz7ykYqmXSzAY8wxRJkZb@dpg-cldh45eg1b2c73f7b63g-a.oregon-postgres.render.com/db_f2lf?ssl=true"
 );
 
 const db = {};
@@ -30,32 +30,56 @@ db.classes = require("./classes.model.js")(sequelize, Sequelize);
 db.enrollment = require("./errollment.model.js")(sequelize, Sequelize);
 db.teachers = require("./teachers.model.js")(sequelize, Sequelize);
 db.assignment = require("./assignment.model.js")(sequelize, Sequelize);
+db.scorings = require("./scorings.model.js")(sequelize, Sequelize);
 db.gradeStructures = require("./gradeStructure.model.js")(sequelize, Sequelize);
 //foreign key teacher
 db.teachers.belongsTo(db.user, { foreignKey: "teacherId", as: "teacher" });
 db.teachers.belongsTo(db.classes, { foreignKey: "classId", as: "class" });
 //foreign key assignment
 db.assignment.belongsTo(db.classes, {
-    foreignKey: "classId",
-    as: "classassignment",
+  foreignKey: "classId",
+  as: "classassignment",
 });
 db.assignment.belongsTo(db.user, {
-    foreignKey: "teacherId",
-    as: "teacherassignment",
+  foreignKey: "teacherId",
+  as: "teacherassignment",
 });
 //foreign key enrollment
 db.enrollment.belongsTo(db.user, {
-    foreignKey: "studentId",
-    as: "studentenrollment",
+  foreignKey: "studentId",
+  as: "studentenrollment",
 });
 db.enrollment.belongsTo(db.classes, {
-    foreignKey: "classId",
-    as: "classenrollment",
+  foreignKey: "classId",
+  as: "classenrollment",
 });
+//foreign key scorings
+db.scorings.belongsTo(db.assignment, {
+  foreignKey: "assignmentId",
+  as: "assignmentScoring",
+});
+db.scorings.belongsTo(db.enrollment, {
+  foreignKey: "studentId",
+  as: "enrollmentScoring",
+});
+db.scorings.belongsTo(db.enrollment, {
+  foreignKey: "classId",
+  as: "classEnrollmentScoring",
+});
+// Assuming 'teachers' is your model for teachers
+db.scorings.belongsTo(db.teachers, {
+  foreignKey: "teacherId",
+  as: "teacherScoring",
+});
+
+db.scorings.belongsTo(db.teachers, {
+  foreignKey: "classId",
+  as: "classScoring",
+});
+
 //foreign key gradeStructure
 db.gradeStructures.belongsTo(db.classes, {
-    foreignKey: "classId",
-    as: "classgradeStructure",
-});
+  foreignKey: "classId",
+  as: "classgradeStructure",
 
 module.exports = db;
