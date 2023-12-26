@@ -1,4 +1,5 @@
 
+const exp = require("constants");
 const db = require("../models");
 const mailer = require("../utils/mailer");
 const classes = db.classes;
@@ -7,6 +8,7 @@ const users = db.user;
 const enrollments = db.enrollment;
 const assignment = db.assignment;
 const crypto = require("crypto");
+const { Op } = require('sequelize');
 require("dotenv").config();
 
 exports.createClass = async (req, res) => {
@@ -175,17 +177,78 @@ const getPagingData = (data, page, limit) => {
 
 exports.getAllClass = async (req, res) => {
   try {
-    const { id, page, size } = req.query;
+    const { id, page, size,asc} = req.query;
     var condition = id ? { id: id } : null;
     const { limit, offset } = getPagination(page, size);
-
+    if (asc==="true") {
     const data = await classes.findAndCountAll({
       limit,
       offset,
+      order: [['id', 'ASC']],
     });
-
     const response = getPagingData(data, page, limit);
     res.send(response);
+  }
+    else {
+      const data = await classes.findAndCountAll({
+        limit,
+        offset,
+        order: [['id', 'DESC']],
+      });
+      const response = getPagingData(data, page, limit);
+      res.send(response);
+    }
+
+   
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: err.message });
+  }
+};
+exports.filterclass = async (req, res) => {
+  try {
+    const { id, page, size,asc,className } = req.query;
+    var condition = id ? { id: id } : null;
+    const { limit, offset } = getPagination(page, size);
+    if (asc==="true") {
+    const data = await classes.findAndCountAll({
+
+      where: {
+        [Op.or]: [
+          {
+            className: {
+              [Op.like]: `%${className}%`,
+            },
+          },
+          {
+            description: {
+              [Op.like]: `%${className}%`,
+            },
+          },
+        ],
+      },
+
+      limit,
+      offset,
+      order: [['id', 'ASC']],
+    });
+    const response = getPagingData(data, page, limit);
+    res.send(response);
+  }
+    else {
+      const data = await classes.findAndCountAll({
+        where: {
+          className: {
+            [Op.like]: `%${className}%`
+          }
+        },
+        limit,
+        offset,
+        order: [['id', 'DESC']],
+      });
+      const response = getPagingData(data, page, limit);
+      res.send(response);
+    }
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: err.message });
@@ -236,6 +299,53 @@ exports.deleteClass = async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 };
+exports.updateActive = (req, res) => {
+  console.log(req.body)
+  const { id, active } = req.body.data;
+  if (!id || !active) {
+    res.status(400).send({ message: "Please provide class id and active!" });
+  } else {
+    classes
+      .update(
+        {
+          active: active,
+        },
+        {
+          where: { id: id },
+        }
+      )
+      .then((result) => {
+        if (result[0] === 1) {
+          res.status(200).send({ message: "Update Success!" });
+        } else {
+          res
+            .status(404)
+            .send({ message: "Class not found or no changes to update." });
+        }
+      }
+      )
+      .catch((err) => {
+        res.status(500).send({ message: err.message });
+      });
+  }
+};
+exports.getactive = (req, res) => {
+  const { id } = req.query;
+  if (!id) {
+    res.status(400).send({ message: "Please provide class id!" });
+  }
+  classes
+    .findOne({
+      where: { id: id },
+    })
+    .then((data) => {
+      res.status(200).send({ message: "Success!", data: data.active });
+    })
+    .catch((err) => {
+      res.status(500).send({ message: err.message });
+    });
+};
+
 
 exports.updateClass = (req, res) => {
   const { id, className, description } = req.body;

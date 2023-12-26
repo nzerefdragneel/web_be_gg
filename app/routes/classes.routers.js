@@ -18,4 +18,7 @@ module.exports = function (app) {
   app.post("/api/classes/updatestudentid",classes.updatemssv);
   app.get("/api/classes/checkmssv",classes.checkmssv);
   app.get("/api/classes/checkhavemssv",classes.checkmssvhaveuserid);
+  app.get("/api/classes/filterclass",classes.filterclass);
+  app.post("/api/classes/updateactive",classes.updateActive);
+  app.get("/api/classes/getactive",classes.getactive);
 };
