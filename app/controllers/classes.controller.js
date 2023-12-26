@@ -3,14 +3,17 @@ const classes = db.classes;
 const teachers = db.teachers;
 const users = db.user;
 const enrollments = db.enrollment;
-const assignment  = db.assignment;
+const assignment = db.assignment;
+const gradeStructures = db.gradeStructures;
 
 exports.CreateClass = async (req, res) => {
     try {
         const { className, description, teacherId } = req.body;
 
         if (!className || !description || !teacherId) {
-            return res.status(400).send({ message: "Please fill all required fields!" });
+            return res
+                .status(400)
+                .send({ message: "Please fill all required fields!" });
         }
 
         const createdClass = await classes.create({
@@ -28,7 +31,7 @@ exports.CreateClass = async (req, res) => {
         await teachers.create({
             classId: createdClass.id,
             teacherId: teacherId,
-            accept:true
+            accept: true,
         });
 
         return res.status(200).send({
@@ -69,7 +72,6 @@ exports.getAllClass = async (req, res) => {
         const { limit, offset } = getPagination(page, size);
 
         const data = await classes.findAndCountAll({
-            
             limit,
             offset,
         });
@@ -88,7 +90,7 @@ exports.getAllClass = async (req, res) => {
 exports.deleteClass = async (req, res) => {
     try {
         const { id } = req.body;
-        console.log(req.body)
+        console.log(req.body);
         await assignment.destroy({
             where: { classId: id },
         });
@@ -105,6 +107,10 @@ exports.deleteClass = async (req, res) => {
             where: { id: id },
         });
 
+        await gradeStructures.destroy({
+            where: { classId: id },
+        });
+
         res.status(200).send({ message: "Delete Success!" });
     } catch (err) {
         console.error(err);
@@ -115,7 +121,9 @@ exports.deleteClass = async (req, res) => {
 exports.updateClass = (req, res) => {
     const { id, className, description } = req.body;
     if (!className && !description) {
-        res.status(400).send({ message: "Please provide at least one field to update!" });
+        res.status(400).send({
+            message: "Please provide at least one field to update!",
+        });
     } else {
         classes
             .update(
@@ -132,7 +140,9 @@ exports.updateClass = (req, res) => {
                 if (result[0] === 1) {
                     res.status(200).send({ message: "Update Success!" });
                 } else {
-                    res.status(404).send({ message: "Class not found or no changes to update." });
+                    res.status(404).send({
+                        message: "Class not found or no changes to update.",
+                    });
                 }
             })
             .catch((err) => {
@@ -141,7 +151,7 @@ exports.updateClass = (req, res) => {
     }
 };
 
-exports.getClassById = (req, res) => {  
+exports.getClassById = (req, res) => {
     const { id } = req.query;
     classes
         .findOne({
@@ -153,7 +163,7 @@ exports.getClassById = (req, res) => {
         .catch((err) => {
             res.status(500).send({ message: err.message });
         });
-}
+};
 exports.getClassByTeacherId = (req, res) => {
     const { id } = req.query;
     teachers
@@ -166,8 +176,8 @@ exports.getClassByTeacherId = (req, res) => {
         .catch((err) => {
             res.status(500).send({ message: err.message });
         });
-}
-exports.getClassByStudentId = (req, res) => {   
+};
+exports.getClassByStudentId = (req, res) => {
     const { id } = req.query;
     enrollments
         .findAll({
@@ -179,15 +189,15 @@ exports.getClassByStudentId = (req, res) => {
         .catch((err) => {
             res.status(500).send({ message: err.message });
         });
-}
+};
 exports.inviteStudent = (req, res) => {
     const { id, studentId } = req.body;
-    console.log(req.body)
+    console.log(req.body);
     enrollments
         .create({
             classId: id,
             studentId: studentId,
-            enrollmentDate:new Date(Date.now()),
+            enrollmentDate: new Date(Date.now()),
         })
         .then((data) => {
             res.status(200).send({ message: "Invite Success!" });
@@ -198,14 +208,14 @@ exports.inviteStudent = (req, res) => {
 };
 exports.studentacceptinvite = (req, res) => {
     const { studentId, classId } = req.query;
-    console.log(studentId,classId);
+    console.log(studentId, classId);
     enrollments
         .update(
             { accept: true }, // Assuming 'accepted' is the column that tracks acceptance
             {
                 where: {
                     studentId: studentId,
-                    classId: classId
+                    classId: classId,
                 },
             }
         )
@@ -213,7 +223,9 @@ exports.studentacceptinvite = (req, res) => {
             if (result[0] === 1) {
                 res.status(200).send({ message: "Acceptance Success!" });
             } else {
-                res.status(404).send({ message: "Enrollment not found or no change." });
+                res.status(404).send({
+                    message: "Enrollment not found or no change.",
+                });
             }
         })
         .catch((err) => {
@@ -225,14 +237,14 @@ exports.getStudentInClass = (req, res) => {
     const { id } = req.query;
     enrollments
         .findAll({
-            where: { classId: id,accept:true },
+            where: { classId: id, accept: true },
             include: [
                 {
-                  model: users,
-                  attributes: ['fullname','username'], // Specify the attributes you want to retrieve from the User model
-                  as: 'studentenrollment', // Assuming there is a foreign key named userId in the Teacher model
+                    model: users,
+                    attributes: ["fullname", "username"], // Specify the attributes you want to retrieve from the User model
+                    as: "studentenrollment", // Assuming there is a foreign key named userId in the Teacher model
                 },
-              ],
+            ],
         })
         .then((data) => {
             res.status(200).send({ message: "Success!", data: data });
@@ -240,9 +252,9 @@ exports.getStudentInClass = (req, res) => {
         .catch((err) => {
             res.status(500).send({ message: err.message });
         });
-}
+};
 exports.inviteTeacher = (req, res) => {
-    const{ id, teacherId } = req.body;
+    const { id, teacherId } = req.body;
     teachers
         .create({
             classId: id,
@@ -254,7 +266,7 @@ exports.inviteTeacher = (req, res) => {
         .catch((err) => {
             res.status(500).send({ message: err.message });
         });
-}
+};
 exports.acceptTeacherInvitation = (req, res) => {
     const { teacherId, classId } = req.query;
 
@@ -271,9 +283,14 @@ exports.acceptTeacherInvitation = (req, res) => {
         )
         .then((result) => {
             if (result[0] === 1) {
-                res.status(200).send({ message: "Teacher Invitation Accepted!" });
+                res.status(200).send({
+                    message: "Teacher Invitation Accepted!",
+                });
             } else {
-                res.status(404).send({ message: "Teacher invitation not found or no changes to update." });
+                res.status(404).send({
+                    message:
+                        "Teacher invitation not found or no changes to update.",
+                });
             }
         })
         .catch((err) => {
@@ -284,21 +301,20 @@ exports.acceptTeacherInvitation = (req, res) => {
 exports.getTeacherInClass = (req, res) => {
     const { id } = req.query;
     teachers
-  .findAll({
-    where: { classId: id, accept: true },
-    include: [
-      {
-        model: users,
-        attributes: ['fullname','username'], // Specify the attributes you want to retrieve from the User model
-        as: 'teacher', // Assuming there is a foreign key named userId in the Teacher model
-      },
-    ],
-  })
-  .then((data) => {
-    res.status(200).send({ message: 'Success!', data: data });
-  })
-  .catch((err) => {
-    res.status(500).send({ message: err.message });
-  });
-}
-
+        .findAll({
+            where: { classId: id, accept: true },
+            include: [
+                {
+                    model: users,
+                    attributes: ["fullname", "username"], // Specify the attributes you want to retrieve from the User model
+                    as: "teacher", // Assuming there is a foreign key named userId in the Teacher model
+                },
+            ],
+        })
+        .then((data) => {
+            res.status(200).send({ message: "Success!", data: data });
+        })
+        .catch((err) => {
+            res.status(500).send({ message: err.message });
+        });
+};
