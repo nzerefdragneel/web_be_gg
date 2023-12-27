@@ -55,7 +55,6 @@ require("./app/routes/auth.routers")(app);
 require("./app/routes/user.routers")(app);
 require("./app/routes/classes.routers")(app);
 require("./app/routes/scoring.routers")(app);
-// require("./app/routes/gradeStructure.routers")(app);
 require("./app/routes/grade.routers")(app);
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;

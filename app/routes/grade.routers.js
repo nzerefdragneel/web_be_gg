@@ -5,4 +5,5 @@ module.exports = function (app) {
     app.get("/api/grade/getById", controller.getGradeByClassId);
     app.post("/api/grade/update", controller.updateGrade);
     app.delete("/api/grade/delete", controller.deleteGrade);
+    app.post("/api/grade/updatePosition", controller.updateGradePosition);
 };

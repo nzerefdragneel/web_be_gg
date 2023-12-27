@@ -134,3 +134,35 @@ exports.deleteGrade = async (req, res) => {
         });
     }
 };
+
+exports.updateGradePosition = async (req, res) => {
+    if (!req.body) {
+        res.status(500).send({ message: "Can't find!" });
+    } else {
+        if (!req.body.gradeId || !req.body.position) {
+            return res.status(400).send({
+                message: "Missing some fields!",
+            });
+        }
+
+        const { gradeId, position } = req.body;
+
+        const selectedGrade = await Grade.findByPk(gradeId);
+
+        if (!selectedGrade) {
+            return res.status(400).send({ message: "Grade not found!" });
+        }
+
+        const grade = await Grade.update(
+            {
+                position: position,
+            },
+            { where: { assignmentId: gradeId } }
+        );
+
+        return res.status(201).send({
+            message: "Update grade position success!",
+            data: grade,
+        });
+    }
+};
