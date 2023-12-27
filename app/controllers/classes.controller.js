@@ -5,6 +5,7 @@ const teachers = db.teachers;
 const users = db.user;
 const enrollments = db.enrollment;
 const assignment = db.assignment;
+const scorings = db.scorings;
 const crypto = require("crypto");
 require("dotenv").config();
 const gradeStructures = db.gradeStructures;
@@ -155,6 +156,278 @@ exports.acceptInvitation = async (req, res) => {
                     return res.status(200).send({ message: "Success!" });
                 });
         }
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: err.message });
+    }
+};
+
+exports.addStudents = async (req, res) => {
+    try {
+        const data = req.body;
+
+        const classId = data.classId.id;
+        const students = data.students;
+
+        console.log(classId, students);
+
+        if (!classId || !students) {
+            return res.status(400).send({ message: "Invalid request" });
+        }
+
+        const classData = await classes.findByPk(classId);
+
+        if (!classData) {
+            return res.status(404).send({ message: "Class not found!" });
+        }
+
+        let existsCount = 0;
+        let notFoundCount = 0;
+
+        let availableAccounts = [];
+
+        for (const student of students) {
+            await users
+                .findOne({ where: { id: student.studentId } })
+                .then((result) => {
+                    if (result) {
+                        availableAccounts.push(student);
+                    } else {
+                        notFoundCount++;
+                    }
+                });
+        }
+
+        for (const student of availableAccounts) {
+            await enrollments
+                .findOne({
+                    where: { classId: classId, studentId: student.studentId },
+                })
+                .then((eResult) => {
+                    if (!eResult) {
+                        enrollments
+                            .create({
+                                classId: classId,
+                                studentId: student.studentId,
+                                enrollmentDate: new Date(Date.now()),
+                                accept: true,
+                            })
+                            .catch((err) => {
+                                console.error(err);
+                                res.status(500).send({ message: err.message });
+                            });
+                    } else {
+                        existsCount++;
+                    }
+                });
+        }
+
+        return res.status(200).send({
+            message: "Add students success!",
+            data: { existsCount: existsCount, notFoundCount: notFoundCount },
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: err.message });
+    }
+};
+
+exports.getScoringsInClass = async (req, res) => {
+    try {
+        const classId = req.query.id;
+        if (!classId) {
+            return res
+                .status(400)
+                .send({ message: "Please provide class id!" });
+        }
+
+        const data = [];
+
+        const scale = {};
+
+        await assignment
+            .findAll({
+                where: { classId: classId },
+            })
+            .then((rawData) => {
+                rawData.forEach((element) => {
+                    scale[element.assignmentId] = element.scale;
+                });
+            });
+
+        await scorings
+            .findAll({
+                where: { classId: classId },
+            })
+            .then((rawData) => {
+                //map student with assignment as an object
+                rawData.forEach((element) => {
+                    const studentId = element.studentId;
+                    const assignmentId = element.assignmentId;
+                    const score = element.score;
+
+                    const student = data.find(
+                        (item) => item.studentId === studentId
+                    );
+
+                    if (student) {
+                        student.assignments.push({
+                            assignmentId,
+                            score,
+                            scale: scale[assignmentId],
+                        });
+                    } else {
+                        data.push({
+                            studentId,
+                            assignments: [
+                                {
+                                    assignmentId,
+                                    score,
+                                    scale: scale[assignmentId],
+                                },
+                            ],
+                        });
+                    }
+                });
+            });
+
+        res.status(200).send({ message: "Success!", data: data });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: err.message });
+    }
+};
+
+exports.addStudents = async (req, res) => {
+    try {
+        const data = req.body;
+
+        const classId = data.classId.id;
+        const students = data.students;
+
+        console.log(classId, students);
+
+        if (!classId || !students) {
+            return res.status(400).send({ message: "Invalid request" });
+        }
+
+        const classData = await classes.findByPk(classId);
+
+        if (!classData) {
+            return res.status(404).send({ message: "Class not found!" });
+        }
+
+        let existsCount = 0;
+        let notFoundCount = 0;
+
+        let availableAccounts = [];
+
+        for (const student of students) {
+            await users
+                .findOne({ where: { id: student.studentId } })
+                .then((result) => {
+                    if (result) {
+                        availableAccounts.push(student);
+                    } else {
+                        notFoundCount++;
+                    }
+                });
+        }
+
+        for (const student of availableAccounts) {
+            await enrollments
+                .findOne({
+                    where: { classId: classId, studentId: student.studentId },
+                })
+                .then((eResult) => {
+                    if (!eResult) {
+                        enrollments
+                            .create({
+                                classId: classId,
+                                studentId: student.studentId,
+                                enrollmentDate: new Date(Date.now()),
+                                accept: true,
+                            })
+                            .catch((err) => {
+                                console.error(err);
+                                res.status(500).send({ message: err.message });
+                            });
+                    } else {
+                        existsCount++;
+                    }
+                });
+        }
+
+        return res.status(200).send({
+            message: "Add students success!",
+            data: { existsCount: existsCount, notFoundCount: notFoundCount },
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: err.message });
+    }
+};
+
+exports.getScoringsInClass = async (req, res) => {
+    try {
+        const classId = req.query.id;
+        if (!classId) {
+            return res
+                .status(400)
+                .send({ message: "Please provide class id!" });
+        }
+
+        const data = [];
+
+        const scale = {};
+
+        await assignment
+            .findAll({
+                where: { classId: classId },
+            })
+            .then((rawData) => {
+                rawData.forEach((element) => {
+                    scale[element.assignmentId] = element.scale;
+                });
+            });
+
+        await scorings
+            .findAll({
+                where: { classId: classId },
+            })
+            .then((rawData) => {
+                //map student with assignment as an object
+                rawData.forEach((element) => {
+                    const studentId = element.studentId;
+                    const assignmentId = element.assignmentId;
+                    const score = element.score;
+
+                    const student = data.find(
+                        (item) => item.studentId === studentId
+                    );
+
+                    if (student) {
+                        student.assignments.push({
+                            assignmentId,
+                            score,
+                            scale: scale[assignmentId],
+                        });
+                    } else {
+                        data.push({
+                            studentId,
+                            assignments: [
+                                {
+                                    assignmentId,
+                                    score,
+                                    scale: scale[assignmentId],
+                                },
+                            ],
+                        });
+                    }
+                });
+            });
+
+        res.status(200).send({ message: "Success!", data: data });
     } catch (err) {
         console.error(err);
         res.status(500).send({ message: err.message });
@@ -366,6 +639,23 @@ exports.getStudentInClass = (req, res) => {
                     as: "studentenrollment", // Assuming there is a foreign key named userId in the Teacher model
                 },
             ],
+        })
+        .then((data) => {
+            res.status(200).send({ message: "Success!", data: data });
+        })
+        .catch((err) => {
+            res.status(500).send({ message: err.message });
+        });
+};
+
+exports.getAssignmentsInClass = (req, res) => {
+    const { id } = req.query;
+    if (!id) {
+        res.status(400).send({ message: "Please provide class id!" });
+    }
+    assignment
+        .findAll({
+            where: { classId: id },
         })
         .then((data) => {
             res.status(200).send({ message: "Success!", data: data });
