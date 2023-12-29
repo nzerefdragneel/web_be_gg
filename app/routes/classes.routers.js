@@ -21,4 +21,5 @@ module.exports = function (app) {
   app.get("/api/classes/filterclass",classes.filterclass);
   app.post("/api/classes/updateactive",classes.updateActive);
   app.get("/api/classes/getactive",classes.getactive);
+  app.get("/api/classes/getallstudentinclass",classes.getallstudentinclass);
 };
