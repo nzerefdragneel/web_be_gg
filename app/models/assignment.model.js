@@ -32,6 +32,9 @@ module.exports = (sequelize, Sequelize) => {
     position: {
       type: Sequelize.STRING,
     },
+    isFinalized: {
+      type: Sequelize.BOOLEAN,
+    },
   });
 
   return TeachingAssignment;
