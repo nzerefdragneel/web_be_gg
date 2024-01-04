@@ -189,7 +189,7 @@ exports.addStudents = async (req, res) => {
 
     for (const student of students) {
       await users
-        .findOne({ where: { id: student.studentId } })
+        .findOne({ where: { mssv: student.studentId } })
         .then((result) => {
           if (result) {
             availableAccounts.push(student);
@@ -209,7 +209,7 @@ exports.addStudents = async (req, res) => {
             enrollments
               .create({
                 classId: classId,
-                studentId: student.studentId,
+                mssv: student.studentId,
                 enrollmentDate: new Date(Date.now()),
                 accept: true,
               })

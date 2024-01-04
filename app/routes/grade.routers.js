@@ -11,4 +11,5 @@ module.exports = function (app) {
     "/api/grade/getGradeByAssignmentId",
     controller.getGradeByAssignmentId
   );
+  app.post("/api/grade/updateScore", controller.updateAssignmentGradeOfStudent);
 };

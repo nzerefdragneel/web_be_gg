@@ -1,8 +1,10 @@
 const db = require("../models");
 const config = require("../config/auth.config");
+const { where } = require("sequelize");
 const Grade = db.assignment;
 const scorings = db.scorings;
 const Teachers = db.teachers;
+const Students = db.enrollment;
 const Classes = db.classes;
 
 exports.createGrade = async (req, res) => {
@@ -124,6 +126,44 @@ exports.updateGrade = async (req, res) => {
     return res.status(201).send({
       message: "Update grade success!",
       data: grade,
+    });
+  }
+};
+
+exports.updateAssignmentGradeOfStudent = async (req, res) => {
+  if (!req.body) {
+    res.status(500).send({ message: "Can't find!" });
+  } else {
+    if (
+      !req.body.assignmentId ||
+      !req.body.mssv ||
+      !req.body.grade ||
+      !req.body.classId
+    ) {
+      return res.status(400).send({
+        message: "Missing some fields!",
+      });
+    }
+
+    const { assignmentId, mssv, grade, classId } = req.body;
+
+    await Students.findOne({ where: { mssv: mssv, classId: classId } }).then(
+      (data) => {
+        if (!data) {
+          return res.status(400).send({ message: "Student not found!" });
+        } else {
+          scorings.update(
+            {
+              score: grade,
+            },
+            { where: { studentId: data.studentId, assignmentId: assignmentId } }
+          );
+        }
+      }
+    );
+
+    return res.status(201).send({
+      message: "Update grade success!",
     });
   }
 };
