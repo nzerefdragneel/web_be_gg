@@ -13,7 +13,10 @@ module.exports = (sequelize, Sequelize) => {
     },
     description: {
       type: Sequelize.STRING
-    }
+    },
+    active: {
+      type: Sequelize.INTEGER
+    },
   }, {
     timestamps: false, // Disable createdAt and updatedAt
   });

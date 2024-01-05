@@ -31,7 +31,6 @@ db.enrollment = require("./errollment.model.js")(sequelize, Sequelize);
 db.teachers = require("./teachers.model.js")(sequelize, Sequelize);
 db.assignment = require("./assignment.model.js")(sequelize, Sequelize);
 db.scorings = require("./scorings.model.js")(sequelize, Sequelize);
-
 //foreign key teacher
 db.teachers.belongsTo(db.user, { foreignKey: "teacherId", as: "teacher" });
 db.teachers.belongsTo(db.classes, { foreignKey: "classId", as: "class" });
