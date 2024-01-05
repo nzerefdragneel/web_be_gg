@@ -36,12 +36,10 @@ exports.edituser = (req, res) => {
                 user.updatedAt = Date.now().toString();
                 user.fullname = req.body.fullname;
                 user.active = req.body.active;
-                if (req.body.password != "" || req.body.password != null) {
+                if (req.body.password !== "" && req.body.password !== null) {
                     var has = bcrypt.hashSync(req.body.password, 8);
                     user.password = has;
-                } else {
-                    user.password = user.password;
-                }
+                } 
                 // Lưu thay đổi vào cơ sở dữ liệu
                 user.save();
                 const password = req.body.password;
