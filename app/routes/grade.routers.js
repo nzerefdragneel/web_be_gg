@@ -12,4 +12,6 @@ module.exports = function (app) {
     controller.getGradeByAssignmentId
   );
   app.post("/api/grade/updateScore", controller.updateAssignmentGradeOfStudent);
+  app.post("/api/grade/updateBatchScore", controller.updateBatchScore);
+  app.post("/api/grade/finalize", controller.finalizeGrade);
 };
