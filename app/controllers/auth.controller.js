@@ -153,7 +153,6 @@ const signin = (req, res, next) => {
             const accessToken = jwt.sign({ password }, config.secret, {
                 expiresIn: 360000, // 1 hour
             });
-            console.log("oke", passportUser);
             if (passportUser) {
                 return res.status(200).send({
                     id: passportUser.id,
@@ -163,7 +162,6 @@ const signin = (req, res, next) => {
                     exp: 360000,
                 });
             }
-            console.log("err", info);
             return res.status(400).send({ message: info.errors });
         }
     )(req, res, next);
@@ -182,24 +180,25 @@ passport.use(
                 },
             })
                 .then((user) => {
-                    console.log(user);
                     if (!user) {
                         return done(null, false, {
                             errors: "Username or password",
                         });
                     }
-                    console.log(bcrypt.hashSync(req.body.password, 8));
+                    if (user.active === false) {
+                        return done(null, false, {
+                            errors: "Your account has been blocked!",
+                        });
+                    }
                     const passwordIsValid = bcrypt.compareSync(
                         req.body.password,
                         user.password
                     );
-                    console.log(passwordIsValid);
                     if (!passwordIsValid) {
                         return done(null, false, {
                             errors: "Username or password",
                         });
                     }
-                    console.log(user);
                     if (
                         !user.verified ||
                         user.verified === false ||
