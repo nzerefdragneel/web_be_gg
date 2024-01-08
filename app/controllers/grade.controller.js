@@ -131,40 +131,167 @@ exports.updateGrade = async (req, res) => {
 };
 
 exports.updateAssignmentGradeOfStudent = async (req, res) => {
-  if (!req.body) {
-    res.status(500).send({ message: "Can't find!" });
-  } else {
-    if (
-      !req.body.assignmentId ||
-      !req.body.mssv ||
-      !req.body.grade ||
-      !req.body.classId
-    ) {
-      return res.status(400).send({
-        message: "Missing some fields!",
+  try {
+    if (!req.body) {
+      res.status(500).send({ message: "Can't find!" });
+    } else {
+      if (
+        !req.body.assignmentId ||
+        !req.body.mssv ||
+        !req.body.grade ||
+        !req.body.classId ||
+        !req.body.teacherId
+      ) {
+        return res.status(400).send({
+          message: "Missing some fields!",
+        });
+      }
+
+      const { assignmentId, mssv, grade, classId, teacherId } = req.body;
+
+      await Students.findOne({ where: { mssv: mssv, classId: classId } }).then(
+        (data) => {
+          if (!data) {
+            return res.status(400).send({ message: "Student not found!" });
+          } else {
+            scorings
+              .findOne({
+                where: {
+                  studentId: data.studentId,
+                  assignmentId: assignmentId,
+                },
+              })
+              .then((result) => {
+                if (!result) {
+                  scorings.create({
+                    studentId: data.studentId,
+                    assignmentId: assignmentId,
+                    classId: classId,
+                    teacherId: teacherId,
+                    score: grade,
+                  });
+                } else {
+                  scorings.update(
+                    {
+                      score: grade,
+                    },
+                    {
+                      where: {
+                        studentId: data.studentId,
+                        assignmentId: assignmentId,
+                      },
+                    }
+                  );
+                }
+              });
+          }
+        }
+      );
+
+      return res.status(201).send({
+        message: "Update grade success!",
       });
     }
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
 
-    const { assignmentId, mssv, grade, classId } = req.body;
-
-    await Students.findOne({ where: { mssv: mssv, classId: classId } }).then(
-      (data) => {
-        if (!data) {
-          return res.status(400).send({ message: "Student not found!" });
-        } else {
-          scorings.update(
-            {
-              score: grade,
-            },
-            { where: { studentId: data.studentId, assignmentId: assignmentId } }
-          );
-        }
+exports.updateBatchScore = async (req, res) => {
+  try {
+    if (!req.body) {
+      res.status(500).send({ message: "Can't find!" });
+    } else {
+      if (
+        !req.body.assignmentId ||
+        !req.body.classId ||
+        !req.body.data ||
+        !req.body.teacherId
+      ) {
+        return res.status(400).send({
+          message: "Missing some fields!",
+        });
       }
-    );
 
-    return res.status(201).send({
-      message: "Update grade success!",
-    });
+      let cannotBeImport = 0;
+
+      const { assignmentId, classId, data, teacherId } = req.body;
+
+      for (let i = 0; i < data.length; i++) {
+        const { studentId, score } = data[i];
+
+        await scorings
+          .findOne({
+            where: {
+              studentId: studentId,
+              assignmentId: assignmentId,
+            },
+          })
+          .then((result) => {
+            if (!result) {
+              scorings.create({
+                studentId: studentId,
+                assignmentId: assignmentId,
+                classId: classId,
+                teacherId: teacherId,
+                score: score,
+              });
+            } else {
+              scorings.update(
+                {
+                  score: score,
+                },
+                {
+                  where: {
+                    studentId: studentId,
+                    assignmentId: assignmentId,
+                  },
+                }
+              );
+            }
+          });
+      }
+      return res.status(201).send({
+        message:
+          "Update grade success! There are " +
+          cannotBeImport +
+          " students cannot be imported!",
+      });
+    }
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+exports.finalizeGrade = async (req, res) => {
+  try {
+    if (!req.body) {
+      res.status(500).send({ message: "Can't find!" });
+    } else {
+      if (!req.body.assignmentId || !req.body.classId) {
+        return res.status(400).send({
+          message: "Missing some fields!",
+        });
+      }
+
+      await Grade.update(
+        {
+          isFinalized: true,
+        },
+        {
+          where: {
+            assignmentId: req.body.assignmentId,
+            classId: req.body.classId,
+          },
+        }
+      );
+
+      return res.status(201).send({
+        message: "Update grade success!",
+      });
+    }
+  } catch (err) {
+    res.status(500).send({ message: err.message });
   }
 };
 
