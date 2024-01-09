@@ -31,6 +31,7 @@ db.enrollment = require("./errollment.model.js")(sequelize, Sequelize);
 db.teachers = require("./teachers.model.js")(sequelize, Sequelize);
 db.assignment = require("./assignment.model.js")(sequelize, Sequelize);
 db.scorings = require("./scorings.model.js")(sequelize, Sequelize);
+db.notifications=require("./notifications.model.js")(sequelize,Sequelize);
 //foreign key teacher
 db.teachers.belongsTo(db.user, { foreignKey: "teacherId", as: "teacher" });
 db.teachers.belongsTo(db.classes, { foreignKey: "classId", as: "class" });
@@ -74,6 +75,21 @@ db.scorings.belongsTo(db.teachers, {
 db.scorings.belongsTo(db.teachers, {
   foreignKey: "classId",
   as: "classScoring",
+});
+
+db.notifications.belongsTo(db.user, {
+  foreignKey: "userId",
+  as: "userNotification",
+});
+
+db.notifications.belongsTo(db.classes, {
+  foreignKey: "classId",
+  as: "classNotification",
+});
+
+db.notifications.belongsTo(db.assignment, {
+  foreignKey: "assignmentId",
+  as: "assignmentNotification",
 });
 
 module.exports = db;
