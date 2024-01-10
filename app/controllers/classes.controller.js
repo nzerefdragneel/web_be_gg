@@ -727,7 +727,7 @@ exports.getTeacherInClass = (req, res) => {
 };
 exports.updatemssv = (req, res) => {
   const { classId, studentId, mssv } = req.body.data;
-  console.log(req.body);
+  console.log(req.body.data);
   if (!classId || !studentId) {
     res.status(400).send({ message: "Please provide all fill!" });
   }
