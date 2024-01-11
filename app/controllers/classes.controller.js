@@ -869,3 +869,43 @@ else {
 }
 
 
+  exports.importbatchstudentid = async (req, res) => {
+    console.log("Batch import student id")
+    const { classId, students } = req.body.data;
+  
+    if (!classId || !students) {
+      res.status(400).send({ message: 'Please provide all fields!' });
+      return;
+    }
+  
+    const data = [];
+  
+    await students.forEach(async (student) => {
+     await enrollments.update(
+        {
+          mssv: student.StudentId,
+        },
+        {
+          where: { classId: classId, studentId: student.UserId },
+        }
+      ).then((result) => {
+        console.log(result)
+        if (result[0] === 1) {
+          data.push(student);
+        }
+      })
+      .catch((err) => {
+      });
+    })
+    console.log(data)
+    
+    res.status(200).send({ message: 'Success!', data: data.count }); 
+    // Assuming you have a unique constraint on clssId and studentId\
+
+   
+  };
+  
+
+
+
+

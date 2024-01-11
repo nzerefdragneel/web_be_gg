@@ -112,7 +112,8 @@ exports.updateAcceptedGradeReview = async (req, res) => {
     }
     //đổi điểm cho học sinh
     
-    if (final_decision=="accepted") {
+    if (final_decision=="accepted") 
+    {
     const selectedGrade=await scorings.findOne({
         where:{studentId:selectedGradeReview.studentId,assignmentId:selectedGradeReview.assignmentId,classId:selectedGradeReview.classId}   
     })
@@ -121,7 +122,8 @@ exports.updateAcceptedGradeReview = async (req, res) => {
     }
 
     selectedGrade.score=selectedGradeReview.expectationGrade;
-    selectedGrade.save();}
+    selectedGrade.save();
+}
 
     selectedGradeReview.final_decision = final_decision;
     selectedGradeReview.save();

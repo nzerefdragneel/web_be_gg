@@ -55,7 +55,7 @@ exports.createNotification = async (req, res) => {
         teacherId: createNotification.teacherId,
       },
     });
-    }
+}
 exports.getNotificationByUserID = async (req, res) => {
     const {userId} = req.query;
     console.log(userId)
