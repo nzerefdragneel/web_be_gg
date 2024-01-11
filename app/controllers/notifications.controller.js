@@ -101,15 +101,14 @@ exports.createBatchNotification = async (req, res) => {
         message: "Created notification success!",
     });
 };
-exports.getNotificationByUserID = async (req, res) => {
+exports.getNotificationByReceiverID = async (req, res) => {
     const { userId } = req.query;
-    console.log(userId);
     const user = await users.findByPk(userId);
     if (!user) {
         return res.status(400).send({ message: "User not found!" });
     }
-    const notificationsByUserId = await notifications.findAll({
-        where: { userId: userId },
+    const notificationsByReceiverId = await notifications.findAll({
+        where: { receiverId: userId },
         include: [
             {
                 model: classes,
@@ -122,10 +121,11 @@ exports.getNotificationByUserID = async (req, res) => {
             },
         ],
     });
-    if (!notificationsByUserId) {
+
+    if (!notificationsByReceiverId) {
         return res.status(400).send({ message: "Notification not found!" });
     }
-    return res.status(200).send(notificationsByUserId);
+    return res.status(200).send(notificationsByReceiverId);
 };
 
 exports.getNotificationByClassID = async (req, res) => {
@@ -152,4 +152,23 @@ exports.getNotificationByClassID = async (req, res) => {
         return res.status(400).send({ message: "Notification not found!" });
     }
     return res.status(200).send(notificationsByClassId);
+};
+
+exports.updateStatusNotification = async (req, res) => {
+    const { notificationId, status } = req.body;
+    if (!notificationId || !status) {
+        return res.status(400).send({ message: "Missing some fields!" });
+    }
+    if (status !== "read" && status !== "unread") {
+        return res.status(400).send({ message: "Status is invalid!" });
+    }
+    const selectedNotification = await notifications.findByPk(notificationId);
+    if (!selectedNotification) {
+        return res.status(400).send({ message: "Notification not found!" });
+    }
+    await notifications.update(
+        { status: status },
+        { where: { notificationId: notificationId } }
+    );
+    return res.status(200).send({ message: "Update status success!" });
 };

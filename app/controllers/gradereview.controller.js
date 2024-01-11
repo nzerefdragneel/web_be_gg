@@ -178,7 +178,7 @@ exports.getGradeReviewByStudentIdAndAssignmentId = async (req, res) => {
         where: {
             studentId: studentId,
             assignmentId: assignmentId,
-            final_decision: { [Op.is]: null },
+            // final_decision: { [Op.is]: null },
         },
     });
     if (!selectedGradeReview) {
