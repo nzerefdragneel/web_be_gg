@@ -97,6 +97,35 @@ exports.getGradeByClassId = async (req, res) => {
   }
 };
 
+exports.getSingleStudentScore = async (req, res) => {
+  if (!req.body) {
+    res.status(500).send({ message: "Can't find!" });
+  } else {
+    if (!req.body.studentId || !req.body.classId) {
+      return res.status(400).send({
+        message: "Missing some fields!",
+      });
+    }
+
+    const { classId, studentId } = req.body;
+
+    const selectedStudent = await Students.findByPk(studentId);
+
+    if (!selectedStudent) {
+      return res.status(400).send({ message: "Student not found!" });
+    }
+
+    const scores = await scorings.findAll({
+      where: { classId: classId, studentId: studentId },
+    });
+
+    return res.status(201).send({
+      message: "Get score success!",
+      data: scores,
+    });
+  }
+};
+
 exports.updateGrade = async (req, res) => {
   if (!req.body) {
     res.status(500).send({ message: "Can't find!" });
