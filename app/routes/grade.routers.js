@@ -7,6 +7,10 @@ module.exports = function (app) {
   app.delete("/api/grade/delete", controller.deleteGrade);
   app.post("/api/grade/updatePosition", controller.updateGradePosition);
   app.get("/api/grade/getSingleAssignment", controller.getSingleAssignment);
+  app.post(
+    "/api/grade/getSingleStudentScore",
+    controller.getSingleStudentScore
+  );
   app.get(
     "/api/grade/getGradeByAssignmentId",
     controller.getGradeByAssignmentId
