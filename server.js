@@ -9,6 +9,12 @@ const app = express();
 var corsOptions = {
     origin: "https://web-fe-gg.vercel.app/",
 };
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    next();
+  });
 
 app.use(cors());
 
@@ -57,6 +63,8 @@ require("./app/routes/classes.routers")(app);
 require("./app/routes/scoring.routers")(app);
 require("./app/routes/grade.routers")(app);
 require("./app/routes/notifications.routers")(app);
+require("./app/routes/gradereview.routers")(app);
+require("./app/routes/comment.routers")(app);
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
