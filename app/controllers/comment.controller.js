@@ -31,5 +31,5 @@ exports.createComment = async (req, res) => {
     commenterId: commenterId,
     createAt: new Date(Date.now()),
   });
-  return res.status(200).send(createComment);
+  return res.status(201).send(createComment);
 };

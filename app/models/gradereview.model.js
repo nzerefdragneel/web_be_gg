@@ -1,55 +1,51 @@
 module.exports = (sequelize, Sequelize) => {
-    const GradeReview = sequelize.define("gradereviews", {
+  const GradeReview = sequelize.define(
+    "gradereviews",
+    {
       reviewId: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
-        allowNull: false
+        allowNull: false,
       },
       studentId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       classId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       assignmentId: {
         type: Sequelize.INTEGER,
-        allowNull: false
+        allowNull: false,
       },
-      gradeComposition:{
+      gradeComposition: {
         type: Sequelize.STRING(255),
-
       },
       currentGrade: {
         type: Sequelize.DECIMAL,
-        allowNull: false
+        allowNull: false,
       },
       expectationGrade: {
         type: Sequelize.DECIMAL,
-        allowNull: false
+        allowNull: false,
       },
       studentExplanation: {
-        type: Sequelize.TEXT
+        type: Sequelize.TEXT,
       },
       final_decision: {
-        type: Sequelize.STRING(255)
+        type: Sequelize.STRING(255),
       },
       createAt: {
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updateAt: {
-        type: Sequelize.DATE
-      }
-    }, {
+        type: Sequelize.DATE,
+      },
+    },
+    {
       timestamps: false, // Disable Sequelize's default timestamps (createdAt and updatedAt)
-      indexes: [
-        {
-          unique: true,
-          fields: ['studentId', 'classId']
-        }
-      ]
-    });
-  
-    return GradeReview;
-  };
-  
+    }
+  );
+
+  return GradeReview;
+};
