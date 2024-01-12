@@ -813,7 +813,93 @@ exports.checkmssvhaveuserid = (req, res) => {
       });
     });
 };
+exports.filterStudentInClass = (req, res) => {
+    const { classId, page, size,asc,studentName } = req.query;
+    if (!classId) {
+      res.status(400).send({ message: "Please provide class id!" });
+    }
+    const { limit, offset } = getPagination(page, size);
+    if (asc==="true") {
 
+    enrollments
+      .findAndCountAll({
+        where: { classId: classId, accept: true },
+        include: [
+          {
+            model: users,
+            attributes: ["fullname", "username"], // Specify the attributes you want to retrieve from the User model
+            as: "studentenrollment", // Assuming there is a foreign key named userId in the Teacher model
+            where: {
+              [Op.or]: [
+                {
+                  fullname: {
+                    [Op.like]: `%${studentName}%`,
+                  },
+                },
+                {
+                  username: {
+                    [Op.like]: `%${studentName}%`,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+        limit,
+        offset,
+        order: [['studentId', 'ASC']],
+      })
+      .then((data) => {
+        const result=getPagingData(data, page, limit);
+        res.status(200).send({ message: "Success!", data: result });
+      }
+      )
+      .catch((err) => {
+        res.status(500).send({ message: err.message });
+      }
+      );
+    }
+    else {
+      enrollments
+      .findAndCountAll({
+        where: { classId: classId, accept: true },
+        include: [
+          {
+            model: users,
+            attributes: ["fullname", "username"], // Specify the attributes you want to retrieve from the User model
+            as: "studentenrollment", // Assuming there is a foreign key named userId in the Teacher model
+            where: {
+              [Op.or]: [
+                {
+                  fullname: {
+                    [Op.like]: `%${studentName}%`,
+                  },
+                },
+                {
+                  username: {
+                    [Op.like]: `%${studentName}%`,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+        limit,
+        offset,
+        order: [['studentId', 'DESC']],
+      })
+      .then((data) => {
+        const result=getPagingData(data, page, limit);
+        res.status(200).send({ message: "Success!", data: result });
+      }
+      )
+      .catch((err) => {
+        res.status(500).send({ message: err.message });
+      }
+      );
+    }
+  };
+  
 exports.getallstudentinclass=(req,res)=>{
   const {classId, page, size,asc} = req.query;  
   if (!classId) {  
@@ -898,7 +984,7 @@ else {
       });
     })
     console.log(data)
-    
+
     res.status(200).send({ message: 'Success!', data: data.count }); 
     // Assuming you have a unique constraint on clssId and studentId\
 
