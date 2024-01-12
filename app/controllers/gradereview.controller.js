@@ -10,12 +10,26 @@ const GradeReview = db.gradeviews;
 const Comments = db.comments;
 const { Op } = require("sequelize");
 exports.createGradeReview = async (req, res) => {
-    const { studentId, assignmentId, classId,gradeComposition , currentGrade, expectationGrade ,studentExplanation} = req.body;
-    if (studentId === undefined || assignmentId === undefined || classId === undefined || gradeComposition === undefined || currentGrade === undefined || expectationGrade === undefined || studentExplanation === undefined) {
+    const {
+        studentId,
+        assignmentId,
+        classId,
+        currentGrade,
+        expectationGrade,
+        studentExplanation,
+    } = req.body;
+    if (
+        studentId === undefined ||
+        assignmentId === undefined ||
+        classId === undefined ||
+        currentGrade === undefined ||
+        expectationGrade === undefined ||
+        studentExplanation === undefined
+    ) {
         return res.status(400).send({
             message: "Missing some fields!",
         });
-    } 
+    }
     const selectedAssignment = await Grade.findByPk(assignmentId);
     if (!selectedAssignment) {
         return res.status(400).send({ message: "Assignment not found!" });
@@ -31,16 +45,21 @@ exports.createGradeReview = async (req, res) => {
         return res.status(400).send({ message: "Student not found!" });
     }
     const selectedGradeReview = await GradeReview.findOne({
-        where: { studentId: studentId, assignmentId: assignmentId },
+        where: {
+            studentId: studentId,
+            assignmentId: assignmentId,
+            final_decision: { [Op.is]: null },
+        },
     });
     if (selectedGradeReview) {
-        return res.status(400).send({ message: "Grade review already existed!" });
+        return res
+            .status(400)
+            .send({ message: "Grade review already existed!" });
     }
     const createGradeReview = await GradeReview.create({
         studentId: studentId,
         assignmentId: assignmentId,
         classId: classId,
-        gradeComposition: gradeComposition,
         currentGrade: currentGrade,
         expectationGrade: expectationGrade,
         studentExplanation: studentExplanation,
@@ -59,7 +78,7 @@ exports.createGradeReview = async (req, res) => {
             studentExplanation: createGradeReview.studentExplanation,
         },
     });
-}
+};
 exports.getGradeReviewByStudentId = async (req, res) => {
     const studentId = req.query.studentId;
     const selectedGradeReview = await GradeReview.findAll({
@@ -72,12 +91,13 @@ exports.getGradeReviewByStudentId = async (req, res) => {
         message: "Get grade review success!",
         data: selectedGradeReview,
     });
-}
+};
 exports.getGradeReviewByClassId = async (req, res) => {
     const classId = req.query.classId;
     const selectedGradeReview = await GradeReview.findAll({
-        where: { classId: classId },
+        where: { classId: classId, final_decision: { [Op.is]: null } },
     });
+    console.log(selectedGradeReview);
     if (!selectedGradeReview) {
         return res.status(400).send({ message: "Grade review not found!" });
     }
@@ -85,11 +105,11 @@ exports.getGradeReviewByClassId = async (req, res) => {
         message: "Get grade review success!",
         data: selectedGradeReview,
     });
-}
+};
 exports.getGradeReviewByAssignmentId = async (req, res) => {
-    const {assignmentId,classId} = req.query;
+    const { assignmentId, classId } = req.query;
     const selectedGradeReview = await GradeReview.findAll({
-        where: { assignmentId: assignmentId,classId:classId },
+        where: { assignmentId: assignmentId, classId: classId },
     });
     if (!selectedGradeReview) {
         return res.status(400).send({ message: "Grade review not found!" });
@@ -98,7 +118,7 @@ exports.getGradeReviewByAssignmentId = async (req, res) => {
         message: "Get grade review success!",
         data: selectedGradeReview,
     });
-}
+};
 exports.updateAcceptedGradeReview = async (req, res) => {
     const { id, final_decision } = req.body;
     if (id === undefined || final_decision === undefined) {
@@ -111,19 +131,22 @@ exports.updateAcceptedGradeReview = async (req, res) => {
         return res.status(400).send({ message: "Grade review not found!" });
     }
     //đổi điểm cho học sinh
-    
-    if (final_decision=="accepted") 
-    {
-    const selectedGrade=await scorings.findOne({
-        where:{studentId:selectedGradeReview.studentId,assignmentId:selectedGradeReview.assignmentId,classId:selectedGradeReview.classId}   
-    })
-    if (!selectedGrade) {
-        return res.status(400).send({ message: "Grade not found!" });
-    }
 
-    selectedGrade.score=selectedGradeReview.expectationGrade;
-    selectedGrade.save();
-}
+    if (final_decision == "accepted") {
+        const selectedGrade = await scorings.findOne({
+            where: {
+                studentId: selectedGradeReview.studentId,
+                assignmentId: selectedGradeReview.assignmentId,
+                classId: selectedGradeReview.classId,
+            },
+        });
+        if (!selectedGrade) {
+            return res.status(400).send({ message: "Grade not found!" });
+        }
+
+        selectedGrade.score = selectedGradeReview.expectationGrade;
+        selectedGrade.save();
+    }
 
     selectedGradeReview.final_decision = final_decision;
     selectedGradeReview.save();
@@ -132,10 +155,41 @@ exports.updateAcceptedGradeReview = async (req, res) => {
         message: "Update grade review success!",
         data: selectedGradeReview,
     });
-}
-
-
-
-
-
-
+};
+exports.getGradeReviewByStudentIdAndClassId = async (req, res) => {
+    const { studentId, classId } = req.query;
+    const selectedGradeReview = await GradeReview.findAll({
+        where: {
+            studentId: studentId,
+            classId: classId,
+        },
+    });
+    if (!selectedGradeReview) {
+        return res.status(400).send({ message: "Grade review not found!" });
+    }
+    return res.status(200).send({
+        message: "Get grade review success!",
+        data: selectedGradeReview,
+    });
+};
+exports.getGradeReviewByStudentIdAndAssignmentId = async (req, res) => {
+    const { studentId, assignmentId } = req.query;
+    const selectedGradeReview = await GradeReview.findOne({
+        where: {
+            studentId: studentId,
+            assignmentId: assignmentId,
+            // final_decision: { [Op.is]: null },
+        },
+    });
+    if (!selectedGradeReview) {
+        return res.status(400).send({ message: "Grade review not found!" });
+    }
+    const listComments = await Comments.findAll({
+        where: { reviewId: selectedGradeReview.dataValues.reviewId },
+    });
+    return res.status(200).send({
+        message: "Get grade review success!",
+        data: selectedGradeReview,
+        comments: listComments,
+    });
+};

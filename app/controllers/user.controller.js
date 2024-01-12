@@ -3,6 +3,7 @@ const config = require("../config/auth.config");
 const User = db.user;
 var bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { use } = require("passport");
 exports.allAccess = (req, res) => {
     res.status(200).send("Public Content.");
 };
@@ -20,9 +21,13 @@ exports.moderatorBoard = (req, res) => {
 };
 
 exports.edituser = (req, res) => {
-    console.log(req.body);
-    if (!req.body.username && !req.body.email && !req.body.password) {
-        res.status(500).send({ message: "Nothing change!" });
+    if (
+        !req.body.fullname &&
+        !req.body.username &&
+        !req.body.email &&
+        !req.body.password
+    ) {
+        res.status(400).send({ message: "Missing some fields!" });
     } else {
         User.findByPk(req.body.userId)
             .then((user) => {
@@ -31,6 +36,7 @@ exports.edituser = (req, res) => {
                 }
                 // Cập nhật thông tin người dùng
 
+                user.fullname = req.body.fullname;
                 user.username = req.body.username;
                 user.email = req.body.email;
                 user.updatedAt = Date.now().toString();
@@ -39,7 +45,7 @@ exports.edituser = (req, res) => {
                 if (req.body.password !== "" && req.body.password !== null) {
                     var has = bcrypt.hashSync(req.body.password, 8);
                     user.password = has;
-                } 
+                }
                 // Lưu thay đổi vào cơ sở dữ liệu
                 user.save();
                 const password = req.body.password;
